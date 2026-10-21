@@ -1,6 +1,7 @@
 """Format d'erreur standard de l'API : {"error": {"code": ..., "message": ..., "details": ...}}."""
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -11,17 +12,24 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 logger = logging.getLogger(__name__)
 
 
-def _error(status_code: int, code: str, message: str, details: Any = None) -> JSONResponse:
+def _error(
+    status_code: int,
+    code: str,
+    message: str,
+    details: Any = None,
+    headers: Mapping[str, str] | None = None,
+) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={"error": {"code": code, "message": message, "details": details}},
+        headers=headers,
     )
 
 
 async def http_exception_handler(_: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, StarletteHTTPException):
         raise exc
-    return _error(exc.status_code, f"http_{exc.status_code}", str(exc.detail))
+    return _error(exc.status_code, f"http_{exc.status_code}", str(exc.detail), headers=exc.headers)
 
 
 async def validation_exception_handler(_: Request, exc: Exception) -> JSONResponse:

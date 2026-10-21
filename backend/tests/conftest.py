@@ -18,11 +18,13 @@ from sqlalchemy import Connection, create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-# Valeurs par défaut si aucun `.env` n'est présent (CI) : jamais de vrai secret ici.
-os.environ.setdefault(
-    "DATABASE_URL", "postgresql+psycopg://freelanceradar:test@127.0.0.1:5432/freelanceradar"
-)
-os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-not-for-production-0123456789")
+# Valeurs par défaut uniquement sans `.env` (CI) : une variable d'environnement primerait
+# sinon sur le `.env` local. Jamais de vrai secret ici.
+if not (Path(__file__).resolve().parents[2] / ".env").exists():
+    os.environ.setdefault(
+        "DATABASE_URL", "postgresql+psycopg://freelanceradar:test@127.0.0.1:5432/freelanceradar"
+    )
+    os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-not-for-production-0123456789")
 
 from app.api.deps import CollectionQueue, get_collection_queue, get_http_client, get_login_limiter  # noqa: E402
 from app.collectors.http import SafeHttpClient  # noqa: E402
@@ -40,7 +42,7 @@ TEST_PASSWORD = "correct-horse-battery-staple"  # noqa: S105  # donnée de test 
 
 @pytest.fixture(scope="session")
 def settings() -> Settings:
-    return Settings(environment="test")  # type: ignore[call-arg]
+    return Settings(environment="test")
 
 
 @pytest.fixture(scope="session")
@@ -57,7 +59,7 @@ def test_database_url(settings: Settings) -> str:
             if not exists:
                 conn.execute(text(f'CREATE DATABASE "{test_name}"'))
     except OperationalError as exc:
-        pytest.skip(f"PostgreSQL injoignable ({url.host}:{url.port}) : {exc.orig}")
+        pytest.skip(f"PostgreSQL indisponible ({url.host}:{url.port}) : {exc.orig}")
     finally:
         admin.dispose()
     test_url = url.set(database=test_name).render_as_string(hide_password=False)
@@ -96,7 +98,9 @@ def public_resolver(host: str, port: int) -> list[str]:
 def make_http_client(
     settings: Settings, handler: Callable[[httpx2.Request], httpx2.Response]
 ) -> SafeHttpClient:
-    return SafeHttpClient(settings, transport=httpx2.MockTransport(handler), resolver=public_resolver)
+    return SafeHttpClient(
+        settings, transport=httpx2.MockTransport(handler), resolver=public_resolver
+    )
 
 
 def rss_handler(request: httpx2.Request) -> httpx2.Response:

@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import ColumnElement, func, or_, select
 
 from app.api.deps import CurrentUser, DbDep
 from app.db.base import utcnow
@@ -12,7 +12,7 @@ from app.schemas.offer import OfferRead, OfferSort, OfferStatus, OfferUpdate
 
 router = APIRouter(prefix="/offers", tags=["offres"])
 
-_SORTS = {
+_SORTS: dict[str, tuple[ColumnElement[Any], ...]] = {
     "-collected_at": (Offer.collected_at.desc(), Offer.id.desc()),
     "collected_at": (Offer.collected_at.asc(), Offer.id.asc()),
     "-published_at": (Offer.published_at.desc().nulls_last(), Offer.id.desc()),
@@ -50,7 +50,10 @@ def list_offers(
     if q:
         pattern = f"%{_escape_like(q)}%"
         stmt = stmt.where(
-            or_(Offer.title.ilike(pattern, escape="\\"), Offer.description.ilike(pattern, escape="\\"))
+            or_(
+                Offer.title.ilike(pattern, escape="\\"),
+                Offer.description.ilike(pattern, escape="\\"),
+            )
         )
     if source_id is not None:
         stmt = stmt.where(Offer.source_id == source_id)
@@ -78,7 +81,9 @@ def update(offer_id: int, body: OfferUpdate, _: CurrentUser, db: DbDep) -> Offer
     offer = _get_or_404(db, offer_id)
     changes = body.model_dump(exclude_unset=True)
     if changes.get("status", "") is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Le statut ne peut pas être nul.")
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "Le statut ne peut pas être nul."
+        )
     for field, value in changes.items():
         setattr(offer, field, value)
     db.commit()

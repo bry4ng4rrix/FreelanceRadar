@@ -33,7 +33,7 @@ def create_token(
     settings: Settings, user_id: int, token_version: int, token_type: TokenType
 ) -> tuple[str, int]:
     """Retourne (jeton, durée de validité en secondes)."""
-    if token_type == "access":
+    if token_type == "access":  # noqa: S105  # type de jeton, pas un secret
         lifetime = timedelta(minutes=settings.access_token_expire_minutes)
     else:
         lifetime = timedelta(days=settings.refresh_token_expire_days)

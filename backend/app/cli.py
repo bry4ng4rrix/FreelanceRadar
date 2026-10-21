@@ -1,7 +1,7 @@
 """Commandes d'administration.
 
-    uv run python -m app.cli create-user --email vous@example.com
-    uv run python -m app.cli import-sources data/sources.json
+uv run python -m app.cli create-user --email vous@example.com
+uv run python -m app.cli import-sources data/sources.json
 """
 
 import argparse

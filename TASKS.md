@@ -1,57 +1,47 @@
 # TASKS — FreelanceRadar
 
-Phases : `ROADMAP.md`. Décisions : `PLANNING.md`.
+Étapes : `ROADMAP.md`. Décisions et commandes : `PLANNING.md`.
 
 ## Terminé
 
 Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfaits, que les tests pertinents ont été exécutés et que le résultat est documenté.
 
-- [x] FR-001 — Analyser l'architecture et l'état actuel du dépôt.
-  - Livrable : audit dans `PLANNING.md` §1 et §4.
-  - Critères : structure, dépendances, commandes disponibles, risques et lacunes identifiés.
+- [x] FR-001 — Audit du dépôt. Livrable : `PLANNING.md`.
+- [x] FR-002 — Socle FastAPI et outillage (`backend/`, uv, Python 3.12, ruff, mypy strict, pytest, erreurs standardisées, logs JSON, CORS explicite).
+- [x] FR-003 — Docker Compose de développement : PostgreSQL 17.11 et Redis 8.2.10, `healthy`, volumes persistants, ports sur `127.0.0.1` ; `GET /api/v1/ready` vérifie les deux.
+- [x] FR-004 — SQLAlchemy 2 + Alembic : migration initiale, `upgrade`/`downgrade`/`check` vérifiés ; base de test dédiée.
+- [x] FR-005 — Authentification JWT : login, refresh, logout (révocation), `me` ; Argon2id ; limitation des échecs par Redis ; création d'utilisateur en CLI.
+- [x] FR-006 — Celery worker + Beat : planification des sources dues, verrou par source, reprises avec backoff. Vérifié en réel.
+- [x] FR-010 — Modèles Source/Offer/CollectionRun + import idempotent de `data/sources.json` (API et CLI).
+- [x] FR-011 — Protection SSRF du client de collecte (IP privées, métadonnées cloud, redirections, ports, taille).
+- [x] FR-012 — Premier parcours RSS de bout en bout : fixture + collecte réelle We Work Remotely et Remotive ; doublons rejetés par PostgreSQL ; offres consultables (recherche, filtres, tri, pagination, statut, notes, archivage).
+  - Vérification : 72 tests (48 unitaires, 24 intégration PostgreSQL) ; ruff, format, mypy strict ; worker + Beat réels ; `/ready` = 200 ; aucun secret dans les logs.
 
-- [ ] FR-002 — Initialiser le dépôt et l'outillage Python. **(code livré, commit en attente)**
-  - Dépendance : FR-001 + validation des décisions D1, D2, D8, D9.
-  - Contenu : recréer `.venv` en 3.12 via `uv` (l'actuel est cassé, suppression soumise à accord), `.gitignore` (dont `.venv/`, `.env`), `pyproject.toml` (Python 3.12, FastAPI, Pydantic v2, ruff, mypy, pytest), `app/main.py` avec `GET /health`, `app/core/config.py` (pydantic-settings), `.env.example`, premier test.
-  - Critères : `uv sync` OK ; `ruff check .`, `ruff format --check .`, `mypy app`, `pytest` passent ; `GET /health` = 200 en test ; aucun secret dans Git ; premier commit sur `main`.
-  - Fait : socle FastAPI (`app/`), erreurs standardisées, logs JSON, `/api/v1/health`, 5 tests. Reste hors tâche : premier commit et renommage `main` (attendent votre accord) ; ancien venv conservé dans `.venv.old-py314/`.
+## À faire — backend (ordre recommandé)
 
-## À faire — Phase 1 (Fondations)
+- [ ] FR-007 — Conteneuriser l'API, le worker et Beat (Dockerfile, services Compose, migrations au démarrage, utilisateur non root).
+  - Critères : `docker compose up -d` démarre tout ; `/ready` = 200 depuis l'hôte ; une collecte planifiée s'exécute dans le conteneur worker.
+- [ ] FR-013 — Ajuster la configuration des sources selon `PLANNING.md` §5 (Remotive ≥ 360 min, Upwork désactivées) — **décision utilisateur requise**.
+- [ ] FR-014 — Alerte de panne répétée : source passée en `error` après N échecs consécutifs visible dans l'API (base des notifications futures).
+- [ ] FR-020 — Profil développeur : CRUD profil, compétences + niveaux, expériences, langues, préférences, mots-clés inclus/exclus.
+- [ ] FR-021 — Upload privé du CV (PDF/DOCX, taille et type contrôlés, jamais journalisé).
+- [ ] FR-022 — Score de pertinence explicable (raisons +/−, seuil configurable) et détection des compétences.
+- [ ] FR-023 — Tableau de bord / statistiques.
+- [ ] FR-030 — IA : interface commune, Gemini, Ollama (`gemma3:4b` dispo en local), sorties validées.
+- [ ] FR-040 — Candidatures : brouillons versionnés, approbation, anti-doublon.
+- [ ] FR-041 — SMTP (sans envoi réel en test), statuts distincts, idempotence.
+- [ ] FR-050 — IMAP et association prudente des réponses.
+- [ ] FR-051 — Centre de notifications et FCM.
+- [ ] FR-013b — Connecteurs HTML/Playwright, source par source, après vérification des CGU.
 
-- [ ] FR-003 — Docker Compose de développement : PostgreSQL, Redis, API.
-  - Dépendance : FR-002.
-  - Critères : `docker compose up -d` → services `healthy` ; volumes persistants (données conservées après `docker compose restart`) ; ports liés à `127.0.0.1` ; `GET /api/v1/ready` vérifie DB et Redis (`/health` reste un simple test de vie).
+## Hors focus actuel
 
-- [ ] FR-004 — SQLAlchemy 2 + Alembic, base de test isolée.
-  - Dépendance : FR-003.
-  - Critères : `alembic upgrade head` et `alembic downgrade base` OK sur base de dev ; fixture pytest sur base de test dédiée ; commandes documentées dans `PLANNING.md` §5.
-
-- [ ] FR-005 — Authentification par clé API et journalisation sans secrets.
-  - Dépendance : FR-002.
-  - Critères : endpoints privés → 401 sans clé ; comparaison en temps constant ; test vérifiant l'absence de la clé dans les logs.
-
-- [ ] FR-006 — Celery worker + Beat branchés sur Redis.
-  - Dépendance : FR-003.
-  - Critères : tâche `ping` exécutée par le worker en test d'intégration ; services `worker` et `beat` dans Compose.
-
-## Backlog (phases suivantes, à détailler le moment venu)
-
-- [ ] FR-010 — Modèles Source/Offer/ScrapingRun + import idempotent des 13 sources (Phase 2).
-- [ ] FR-011 — Garde SSRF des collecteurs (Phase 2).
-- [ ] FR-012 — Connecteur RSS de bout en bout sur fixture, avec déduplication (Phase 2).
-- [ ] FR-013 — Connecteurs HTTP/HTML puis Playwright sur fixtures (Phase 2).
-- [ ] FR-014 — Vérification réelle des 13 sources : testée / à vérifier / bloquée (Phase 2).
-- [ ] FR-020 — Offres : filtres, pagination, scoring ; profil, compétences, CV (Phase 3).
-- [ ] FR-030 — Sélection Gemini/Ollama et brouillons de proposition (Phase 4).
-- [ ] FR-040 — Candidatures, approbation, envoi SMTP idempotent (Phase 5).
-- [ ] FR-050 — Synchronisation IMAP et association des réponses (Phase 6).
-- [ ] FR-051 — Centre de notifications et FCM (Phase 6).
-- [ ] FR-060 — Workflows n8n (Phase 7).
-- [ ] FR-070 — Application Flutter (Phase 8).
-- [ ] FR-080 — Reverse proxy, sauvegardes, guide VPS (Phase 9).
+- [ ] FR-060 — Workflows n8n.
+- [ ] FR-070 — Application Flutter.
+- [ ] FR-080 — Reverse proxy HTTPS, sauvegardes, guide VPS.
 
 ## Bloqué
 
 Pour chaque blocage, indiquer la cause, la preuve observée et l'action nécessaire pour le résoudre.
 
-_Aucun pour le moment._
+- Sources Upwork (RSS) : flux répondant 404/403 le 2026-10-21. Action : désactiver ou remplacer par une API officielle autorisée.

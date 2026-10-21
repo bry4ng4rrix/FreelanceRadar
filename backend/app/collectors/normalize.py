@@ -60,7 +60,9 @@ def html_to_text(value: str, max_length: int = 20_000) -> str:
     parser = _TextExtractor()
     parser.feed(value)
     parser.close()
-    lines = (_WHITESPACE.sub(" ", unescape(line)).strip() for line in "".join(parser.parts).split("\n"))
+    lines = (
+        _WHITESPACE.sub(" ", unescape(line)).strip() for line in "".join(parser.parts).split("\n")
+    )
     text = "\n".join(line for line in lines if line)
     return text[:max_length]
 

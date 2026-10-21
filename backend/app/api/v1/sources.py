@@ -128,7 +128,9 @@ def test(
     try:
         raw = get_collector(source.target_type).collect(to_source_config(source), client)
     except CollectorError as exc:
-        return SourceTestResult(ok=False, items_found=0, valid_items=0, sample_titles=[], error=str(exc))
+        return SourceTestResult(
+            ok=False, items_found=0, valid_items=0, sample_titles=[], error=str(exc)
+        )
     normalized = normalize_offers(source.id, raw)
     return SourceTestResult(
         ok=True,

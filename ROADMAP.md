@@ -1,21 +1,21 @@
 # ROADMAP — FreelanceRadar
 
-Phases du projet. Le détail des tâches est dans `TASKS.md`, les décisions dans `PLANNING.md`.
-Spécifications de référence : `prompt.md` (cœur) et `notifications.md` (e-mail, IMAP, FCM, Flutter).
+Étapes du projet (alignées sur le « prompt maître » du 2026-10-21). Détail des tâches : `TASKS.md`. Décisions : `PLANNING.md`.
+Spécifications de référence : prompt maître (prioritaire), `prompt.md` (cœur) et `notifications.md` (e-mail, IMAP, FCM, Flutter).
 
-Une phase ne commence que lorsque les critères de la précédente sont vérifiés.
+Une étape ne commence que lorsque les critères de la précédente sont vérifiés. **Focus actuel : backend FastAPI uniquement.**
 
-| Phase | Objectif | Dépend de | Critères de sortie vérifiables |
-|---|---|---|---|
-| 0 — Cadrage | Audit, documents de pilotage | — | ROADMAP/PLANNING/TASKS/CHANGELOG validés ; premier commit |
-| 1 — Fondations | Squelette FastAPI, config, Docker Compose (Postgres, Redis), Alembic, outillage qualité | 0 | `docker compose up` : postgres et redis `healthy` ; `GET /health` = 200 ; `alembic upgrade head` OK sur base de dev ; `ruff`, `mypy`, `pytest` passent ; auth par clé API sur endpoints privés |
-| 2 — Sources et collecte | Modèles Source/Offer/ScrapingRun, import des 13 sources, connecteurs RSS → HTTP/HTML → Playwright, Celery + Beat, protection SSRF | 1 | Import idempotent de `data/sources.json` ; collecte RSS et Playwright sur fixtures locales ; doublons rejetés par contrainte PostgreSQL ; tests SSRF (localhost, IP privées, redirections) ; historique des exécutions consultable |
-| 3 — Offres et profil | Normalisation, scoring, filtres/pagination, CRUD profil, compétences, CV | 2 | Recherche filtrée paginée testée ; profil modifiable ; upload CV validé (type, taille) et jamais journalisé |
-| 4 — IA | Interface commune, Gemini, Ollama, prompts, validation des sorties | 3 | Fournisseur sélectionnable en base ; tests avec fournisseurs simulés ; la collecte fonctionne sans IA configurée |
-| 5 — Candidatures et SMTP | Brouillons, approbation, envoi SMTP idempotent | 4 | Mode automatique refusé par défaut ; destinataire inconnu jamais deviné ; double envoi impossible (test) ; tests SMTP sur serveur factice uniquement |
-| 6 — IMAP et notifications | Synchronisation IMAP, association des réponses, centre de notifications, FCM | 5 | Association par `Message-ID`/`In-Reply-To`/`References` testée, cas ambigus inclus ; FCM simulé ; un échec FCM n'altère pas le statut d'envoi |
-| 7 — n8n | Workflows JSON appelant l'API | 2 (A, D), 4–5 (B, C, E) | Workflows importables dans le n8n local ; aucune logique métier dupliquée |
-| 8 — Flutter | App Android : offres, candidatures, boîte de réception, notifications | 6 | Tests widgets/navigation ; états chargement/erreur/vide ; liens profonds depuis une notification |
-| 9 — Production | Reverse proxy HTTPS, sauvegardes, guide VPS | 1–8 | Guide Ubuntu rejoué sur une VM de test ; restauration PostgreSQL vérifiée |
+| Étape | Objectif | Dépend de | Critères de sortie vérifiables | État |
+|---|---|---|---|---|
+| 1 — Audit | État du dépôt, documents de pilotage | — | Documents à jour, risques identifiés | ✅ |
+| 2 — Fondation backend | FastAPI, PostgreSQL, SQLAlchemy/Alembic, auth JWT, santé, OpenAPI | 1 | Migrations aller-retour OK ; `/health` et `/ready` ; routes privées → 401 ; ruff/mypy/pytest verts | ✅ (sauf conteneur API, FR-007) |
+| 3 — Premier parcours | RSS réel → normalisation → PostgreSQL → déduplication → API → tâche planifiée | 2 | Collecte réelle d'une source autorisée ; doublons rejetés par PostgreSQL ; offres lisibles via l'API ; Beat déclenche les collectes | ✅ |
+| 4 — Métier | Profil, préférences, filtres, score explicable, favoris, candidatures | 3 | CRUD profil testé ; score avec raisons +/− ; brouillons soumis à approbation | ⏳ |
+| 5 — IA | Gemini + Ollama derrière une interface commune | 4 | Fournisseurs simulés en test ; sorties validées ; aucune invention de compétence | ⏳ |
+| 6 — E-mails | SMTP, IMAP, conversations, idempotence | 4 | Tests sans envoi réel ; statuts distincts (accepté SMTP ≠ livré) | ⏳ |
+| 7 — Notifications | Centre persistant + FCM | 6 | Notification créée même si FCM indisponible | ⏳ |
+| 8 — Flutter | Application Android reliée à l'API | 2–7 | Tests widgets/navigation ; états chargement/erreur/vide | ⏳ (hors focus) |
+| 9 — n8n et sources | Workflows, connecteurs supplémentaires (HTML, Playwright) | 3 | Workflows importables ; chaque source testée, documentée et classée | ⏳ |
+| 10 — Livraison | Docker complet, guides, bilan | tout | Compose démarre l'ensemble ; README et guide VPS rejoués | ⏳ |
 
-Les sources externes réelles sont classées séparément : testées, à vérifier, bloquées. Un test sur fixture ne prouve pas qu'un site fonctionne.
+Un test sur fixture ne prouve pas qu'un site fonctionne : l'état réel de chaque source est tenu dans `PLANNING.md` §5.

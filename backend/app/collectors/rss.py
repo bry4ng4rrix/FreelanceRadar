@@ -1,3 +1,4 @@
+import calendar
 from datetime import UTC, datetime
 from typing import Any
 
@@ -12,7 +13,8 @@ def _published_at(entry: Any) -> datetime | None:
     parsed = entry.get("published_parsed") or entry.get("updated_parsed")
     if not parsed:
         return None
-    return datetime(*parsed[:6], tzinfo=UTC)
+    # feedparser fournit un struct_time déjà converti en UTC.
+    return datetime.fromtimestamp(calendar.timegm(parsed), UTC)
 
 
 def _description(entry: Any) -> str:

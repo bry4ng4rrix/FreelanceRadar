@@ -30,9 +30,7 @@ def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
-@router.get(
-    "/ready", response_model=ReadyResponse, responses={503: {"model": ReadyResponse}}
-)
+@router.get("/ready", response_model=ReadyResponse, responses={503: {"model": ReadyResponse}})
 def ready(db: DbDep, settings: SettingsDep) -> JSONResponse:
     """Readiness : PostgreSQL et Redis répondent."""
     try:

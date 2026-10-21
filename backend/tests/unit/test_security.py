@@ -40,7 +40,13 @@ def test_refresh_token_rejected_as_access(settings: Settings) -> None:
 
 def test_expired_and_forged_tokens_rejected(settings: Settings) -> None:
     now = datetime.now(UTC)
-    payload = {"sub": "1", "type": "access", "ver": 0, "iat": now, "exp": now - timedelta(seconds=1)}
+    payload = {
+        "sub": "1",
+        "type": "access",
+        "ver": 0,
+        "iat": now,
+        "exp": now - timedelta(seconds=1),
+    }
     expired = jwt.encode(payload, settings.jwt_secret_key.get_secret_value(), algorithm="HS256")
     with pytest.raises(InvalidTokenError):
         decode_token(settings, expired, "access")

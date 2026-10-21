@@ -26,7 +26,10 @@ FIXTURES = Path(__file__).parents[1] / "fixtures"
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
-        ("HTTPS://Example.COM:443/Jobs/?utm_source=rss&b=2&a=1#top", "https://example.com/Jobs?a=1&b=2"),
+        (
+            "HTTPS://Example.COM:443/Jobs/?utm_source=rss&b=2&a=1#top",
+            "https://example.com/Jobs?a=1&b=2",
+        ),
         ("http://example.com", "http://example.com/"),
         ("https://example.com:8443/x/", "https://example.com:8443/x"),
         ("https://example.com/x?fbclid=abc", "https://example.com/x"),
@@ -112,7 +115,9 @@ def test_validate_public_url_rejects_internal_targets(url: str) -> None:
 
 def test_validate_public_url_rejects_hostname_resolving_to_private_ip() -> None:
     with pytest.raises(UnsafeUrlError):
-        validate_public_url("https://internal.example.com/", lambda h, p: ["93.184.215.14", "10.1.2.3"])
+        validate_public_url(
+            "https://internal.example.com/", lambda h, p: ["93.184.215.14", "10.1.2.3"]
+        )
 
 
 def test_validate_public_url_accepts_public_host() -> None:
@@ -141,10 +146,20 @@ def test_public_redirect_is_followed(settings: Settings) -> None:
 
 @pytest.mark.parametrize(
     ("status", "error"),
-    [(403, SourceBlockedError), (429, SourceBlockedError), (503, TransientCollectorError), (404, CollectorError)],
+    [
+        (403, SourceBlockedError),
+        (429, SourceBlockedError),
+        (503, TransientCollectorError),
+        (404, CollectorError),
+    ],
 )
-def test_http_errors_are_classified(settings: Settings, status: int, error: type[Exception]) -> None:
-    with make_http_client(settings, lambda r: httpx2.Response(status)) as client, pytest.raises(error):
+def test_http_errors_are_classified(
+    settings: Settings, status: int, error: type[Exception]
+) -> None:
+    with (
+        make_http_client(settings, lambda r: httpx2.Response(status)) as client,
+        pytest.raises(error),
+    ):
         client.get("https://jobs.example.com/feed.rss")
 
 
