@@ -75,7 +75,7 @@ class DashboardPage extends ConsumerWidget {
               onAction: () => openOffers(context, ref, const OfferFilters()),
             ),
             const _LatestOffersCard(),
-            SectionHeader('Sources', action: 'Gérer', onAction: () => context.go(Routes.sources)),
+            SectionHeader('Sources', action: 'Gérer', onAction: () => context.push(Routes.sources)),
             const _SourcesCard(),
           ],
         ),
@@ -190,7 +190,7 @@ class _StatsGrid extends ConsumerWidget {
         value: n(active),
         icon: Icons.rss_feed_rounded,
         caption: s == null ? null : 'Sur ${s.length}',
-        onTap: () => context.go(Routes.sources),
+        onTap: () => context.push(Routes.sources),
       ),
       StatTile(
         label: 'Sources en erreur',
@@ -198,7 +198,7 @@ class _StatsGrid extends ConsumerWidget {
         icon: Icons.error_outline_rounded,
         color: (failing ?? 0) > 0 ? AppColors.danger : null,
         caption: 'Erreur ou blocage',
-        onTap: () => context.go(Routes.sources),
+        onTap: () => context.push(Routes.sources),
       ),
     ];
 
@@ -286,7 +286,7 @@ class _SourcesCard extends ConsumerWidget {
               title: 'Aucune source active',
               message: 'Activez une source pour lancer les collectes planifiées.',
               actionLabel: 'Voir les sources',
-              onAction: () => context.go(Routes.sources),
+              onAction: () => context.push(Routes.sources),
             ),
           );
         }

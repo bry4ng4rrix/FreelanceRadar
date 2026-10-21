@@ -48,6 +48,10 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 | D16 | Sans FCM, le badge mobile est relu toutes les 60 s au premier plan | En attendant le projet Firebase |
 | D17 | Une seule image backend (Python 3.12.15-slim, uv 0.13.0, utilisateur non root) pour API, worker, Beat et migrations ; `migrate` s'exécute avant les autres à chaque `up` | Démarrage en une commande, migrations fiables |
 | D18 | SMTP en TLS direct (port 465, certificat vérifié) ; secrets uniquement dans `.env` ; envoi désactivé (`EMAIL_SENDING_ENABLED=false`) | Serveur sondé : 465 et 587 disponibles, 25 fermé |
+| D19 | Gemini via `google-genai`, sortie JSON contrainte par schéma puis revalidée (longueurs, texte de remplacement refusé, compétences hors profil retirées) ; annonce transmise comme donnée non fiable | `prompt.md` §11 ; injection testée |
+| D20 | Modèles à offre gratuite en cascade ; 503/429/réseau = erreur temporaire (modèle suivant, puis reprises Celery 30/60/120 s) | Tarifs officiels vérifiés le 2026-10-21 |
+| D21 | Candidature : une par offre ; envoi uniquement après `confirm: true`, destinataire saisi par l'utilisateur, réservation atomique (`sending`), `sent` après acceptation SMTP, `delivery_unknown` jamais renvoyé, limite quotidienne | `prompt.md` §12, `notifications.md` §4 |
+| D22 | Collecte planifiée par Celery Beat (fréquence par source) ; n8n réservé à l'orchestration externe (rapports, alertes) | Éviter deux planificateurs concurrents |
 
 ## 4. Risques et limites connus
 

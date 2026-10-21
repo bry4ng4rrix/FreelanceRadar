@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freelanceradar/features/applications/data/application_models.dart';
 import 'package:freelanceradar/features/notifications/data/notification_models.dart';
 import 'package:freelanceradar/features/offers/data/offer_models.dart';
 import 'package:freelanceradar/features/profile/data/profile_models.dart';
@@ -101,7 +102,55 @@ const notificationJson = <String, dynamic>{
   'read_at': null,
 };
 
+const applicationJson = <String, dynamic>{
+  'id': 7,
+  'offer_id': 12,
+  'offer_title': 'Acme Fictive: Développeur FastAPI senior',
+  'offer_url': 'https://jobs.example.com/remote-jobs/acme-fastapi',
+  'status': 'pending_approval',
+  'recipient_email': null,
+  'subject': 'Candidature — Développeur FastAPI',
+  'message': 'Bonjour,\n\nVotre mission correspond à mon profil.\n\nJane Dev',
+  'language': 'fr',
+  'generated_subject': 'Candidature — Développeur FastAPI',
+  'generated_message': 'Bonjour,\n\nVotre mission correspond à mon profil.\n\nJane Dev',
+  'referenced_skills': ['FastAPI'],
+  'ai_warnings': ['Budget non indiqué'],
+  'ai_confidence': 0.8,
+  'ai_provider': 'gemini',
+  'ai_model': 'gemini-3.8-flash',
+  'generated_at': '2026-10-21T10:00:00Z',
+  'generation_count': 1,
+  'send_attempts': 0,
+  'sent_at': null,
+  'sent_from': null,
+  'sent_to': null,
+  'sent_subject': null,
+  'sent_message': null,
+  'error_message': null,
+  'created_at': '2026-10-21T10:00:00Z',
+  'updated_at': '2026-10-21T10:00:00Z',
+};
+
 void main() {
+  group('Application', () {
+    test('lit une candidature du serveur', () {
+      final application = Application.fromJson(applicationJson);
+      expect(application.status, ApplicationStatus.pendingApproval);
+      expect(application.offerTitle, startsWith('Acme'));
+      expect(application.aiConfidence, 0.8);
+      expect(application.isEdited, isFalse);
+    });
+
+    test('règles de statut identiques au serveur', () {
+      expect(ApplicationStatus.pendingApproval.isSendable, isTrue);
+      expect(ApplicationStatus.failed.isSendable, isTrue);
+      expect(ApplicationStatus.deliveryUnknown.isSendable, isFalse);
+      expect(ApplicationStatus.sent.isEditable, isFalse);
+      expect(ApplicationStatus.sent.canCancel, isFalse);
+      expect(ApplicationStatus.fromApi('delivery_unknown'), ApplicationStatus.deliveryUnknown);
+    });
+  });
   group('Profile', () {
     test('lit le profil du serveur (montant en chaîne, date seule, type inconnu ignoré)', () {
       final profile = Profile.fromJson(profileJson);

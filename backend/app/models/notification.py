@@ -21,6 +21,7 @@ NOTIFICATION_TYPES = (
     "application_ready",
     "application_sent",
     "application_failed",
+    "reply_received",
 )
 
 

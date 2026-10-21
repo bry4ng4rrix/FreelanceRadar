@@ -19,7 +19,8 @@ enum _Filter {
   unread('Non lues', null),
   newOffers('Nouvelles offres', NotificationType.newOffers),
   sourceError('Erreurs', NotificationType.sourceError),
-  sourceBlocked('Blocages', NotificationType.sourceBlocked);
+  sourceBlocked('Blocages', NotificationType.sourceBlocked),
+  applications('Candidatures', NotificationType.applicationReady);
 
   const _Filter(this.label, this.type);
   final String label;
@@ -59,7 +60,10 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     if (!mounted) return;
     final offerId = notification.offerId;
     final sourceId = notification.sourceId;
-    if (offerId != null) {
+    final applicationId = notification.applicationId;
+    if (applicationId != null) {
+      await context.push(Routes.application(applicationId));
+    } else if (offerId != null) {
       await context.push(Routes.offer(offerId));
     } else if (sourceId != null && notification.type == NotificationType.newOffers) {
       // Plusieurs nouvelles offres : liste des offres de la source.

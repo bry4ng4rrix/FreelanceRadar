@@ -53,11 +53,27 @@ class Settings(BaseSettings):
     # Garde-fou : nombre maximal de candidatures envoyées par utilisateur et par jour.
     email_daily_limit: int = Field(default=20, ge=1, le=500)
 
+    # IMAP : lecture seule de la boîte de réception pour retrouver les réponses aux candidatures.
+    # Identifiants : ceux du SMTP si IMAP_USERNAME / IMAP_PASSWORD sont absents.
+    email_sync_enabled: bool = False
+    imap_host: str | None = None
+    imap_port: int = Field(default=993, ge=1, le=65535)
+    imap_security: Literal["ssl", "starttls"] = "ssl"
+    imap_username: str | None = None
+    imap_password: SecretStr | None = None
+    imap_folder: str = "INBOX"
+    imap_sync_interval_seconds: int = Field(default=300, ge=60)
+    imap_batch_size: int = Field(default=100, ge=1, le=1000)
+
     # IA : rédaction des candidatures. Sans clé, la génération est refusée proprement.
     ai_provider: Literal["gemini", "disabled"] = "gemini"
     gemini_api_key: SecretStr | None = None
-    # Modèle recommandé par la documentation officielle pour les nouveaux projets (2026-10).
-    gemini_model: str = "gemini-3.8-flash"
+    # Modèles essayés dans l'ordre : si l'un est surchargé (503) ou hors quota (429), le suivant
+    # prend le relais. Tous ont une offre gratuite (tarifs officiels vérifiés le 2026-10-21).
+    gemini_models: list[str] = Field(
+        default=["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"],
+        min_length=1,
+    )
     ai_temperature: float = Field(default=0.4, ge=0, le=2)
     ai_timeout_seconds: float = Field(default=60, gt=0, le=300)
 

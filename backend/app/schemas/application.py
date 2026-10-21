@@ -20,6 +20,8 @@ ApplicationStatus = Literal[
 class ApplicationRead(ORMModel):
     id: int
     offer_id: int
+    offer_title: str
+    offer_url: str
     status: ApplicationStatus
     recipient_email: str | None
     subject: str | None

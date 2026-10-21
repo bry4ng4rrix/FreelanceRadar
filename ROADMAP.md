@@ -11,8 +11,8 @@ Une étape ne commence que lorsque les critères de la précédente sont vérifi
 | 2 — Fondation backend | FastAPI, PostgreSQL, SQLAlchemy/Alembic, auth JWT, santé, OpenAPI | 1 | Migrations aller-retour OK ; `/health` et `/ready` ; routes privées → 401 ; ruff/mypy/pytest verts | ✅ (sauf conteneur API, FR-007) |
 | 3 — Premier parcours | RSS réel → normalisation → PostgreSQL → déduplication → API → tâche planifiée | 2 | Collecte réelle d'une source autorisée ; doublons rejetés par PostgreSQL ; offres lisibles via l'API ; Beat déclenche les collectes | ✅ |
 | 4 — Métier | Profil, préférences, filtres, score explicable, favoris, candidatures | 3 | CRUD profil testé ; score avec raisons +/− ; brouillons soumis à approbation | 🟡 profil + compétences livrés (FR-020a) |
-| 5 — IA | Gemini + Ollama derrière une interface commune | 4 | Fournisseurs simulés en test ; sorties validées ; aucune invention de compétence | ⏳ |
-| 6 — E-mails | SMTP, IMAP, conversations, idempotence | 4 | Tests sans envoi réel ; statuts distincts (accepté SMTP ≠ livré) | ⏳ |
+| 5 — IA | Gemini + Ollama derrière une interface commune | 4 | Fournisseurs simulés en test ; sorties validées ; aucune invention de compétence | 🟡 Gemini livré (FR-030a), Ollama à faire |
+| 6 — E-mails | SMTP, IMAP, conversations, idempotence | 4 | Tests sans envoi réel ; statuts distincts (accepté SMTP ≠ livré) | 🟡 envoi SMTP livré, IMAP (réponses) à faire |
 | 7 — Notifications | Centre persistant + FCM | 6 | Notification créée même si FCM indisponible | 🟡 centre persistant livré (FR-051a), FCM à faire |
 | 8 — Flutter | Application Android reliée à l'API | 2–7 | Tests widgets/navigation ; états chargement/erreur/vide | 🟡 offres + sources livrées (FR-070a), reste à suivre le backend |
 | 9 — n8n et sources | Workflows, connecteurs supplémentaires (HTML, Playwright) | 3 | Workflows importables ; chaque source testée, documentée et classée | ⏳ |

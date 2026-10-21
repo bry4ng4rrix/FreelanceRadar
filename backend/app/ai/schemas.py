@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ApplicationPromptInput(BaseModel):
@@ -27,9 +27,11 @@ class ApplicationPromptInput(BaseModel):
 class GeneratedApplication(BaseModel):
     """Sortie structurée exigée du modèle (`prompt.md` §11), revalidée côté serveur."""
 
-    subject: str = Field(min_length=1, max_length=200, description="Objet de l'e-mail.")
+    subject: str = Field(min_length=5, max_length=200, description="Objet complet de l'e-mail.")
     message: str = Field(
-        min_length=1, max_length=8000, description="Corps de l'e-mail, texte brut, signé."
+        min_length=200,
+        max_length=8000,
+        description="Texte COMPLET de l'e-mail (120 à 220 mots), texte brut, signé.",
     )
     language: Literal["fr", "en"] = Field(description="Langue de l'annonce et du message.")
     referenced_skills: list[str] = Field(
@@ -40,3 +42,12 @@ class GeneratedApplication(BaseModel):
         description="Points à vérifier par le candidat (informations manquantes, doutes).",
     )
     confidence: float = Field(ge=0, le=1, description="Adéquation estimée entre profil et offre.")
+
+    @field_validator("subject", "message")
+    @classmethod
+    def no_placeholder(cls, value: str) -> str:
+        """Refuse les textes vides de sens (« ... », « … ») renvoyés à la place du contenu."""
+        letters = sum(char.isalpha() for char in value)
+        if letters < len(value.strip()) * 0.5:
+            raise ValueError("Texte de remplacement au lieu du contenu demandé.")
+        return value.strip()

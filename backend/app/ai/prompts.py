@@ -24,7 +24,9 @@ Règles impératives :
    tel qu'indiqué. `referenced_skills` ne contient que des noms présents dans PROFIL.skills.
 5. Termine par une signature avec le nom et les liens du profil s'ils existent.
 6. `confidence` (0 à 1) : adéquation entre le profil et l'offre, honnête.
-7. Réponds uniquement avec l'objet JSON demandé.
+7. `subject` et `message` contiennent le texte réel et complet (jamais « ... », un résumé ou
+   un modèle à compléter).
+8. Réponds uniquement avec l'objet JSON demandé.
 """
 
 

@@ -20,7 +20,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.ai.base import AIError, AIProvider
+from app.ai.base import AIError, AIProvider, AITransientError
 from app.ai.schemas import ApplicationPromptInput
 from app.core.config import Settings
 from app.db.base import utcnow
@@ -146,9 +146,18 @@ def _keep_known_skills(referenced: list[str], skills: list[Skill]) -> tuple[list
 
 
 def generate_application(
-    db: Session, application_id: int, settings: Settings, provider_factory: ProviderFactory
+    db: Session,
+    application_id: int,
+    settings: Settings,
+    provider_factory: ProviderFactory,
+    *,
+    raise_transient: bool = False,
 ) -> Application | None:
-    """Rédige le brouillon puis notifie l'utilisateur qu'il est prêt à valider."""
+    """Rédige le brouillon puis notifie l'utilisateur qu'il est prêt à valider.
+
+    Avec `raise_transient`, une erreur temporaire de l'IA est relancée sans rien enregistrer :
+    la tâche Celery réessaie plus tard au lieu de marquer la rédaction en échec.
+    """
     application = db.get(Application, application_id)
     if application is None or application.status != "generating":
         return application  # déjà traitée (tâche rejouée) : rien à faire
@@ -161,21 +170,13 @@ def generate_application(
         prompt_input = build_prompt_input(db, user, offer)
         provider = provider_factory(settings)
         result = provider.generate_application(prompt_input)
+    except AITransientError as exc:
+        if raise_transient:
+            db.rollback()
+            raise
+        return _record_generation_failure(db, application, offer, user.id, exc)
     except AIError as exc:
-        application.status = "generation_failed"
-        application.error_message = str(exc)
-        notify_user(
-            db,
-            user.id,
-            type="application_failed",
-            title="Rédaction impossible",
-            body=f"{offer.title} : {exc}",
-            dedup_key=f"application:{application.id}:generation_failed:{application.generation_count}",
-            offer_id=offer.id,
-            application_id=application.id,
-        )
-        db.commit()
-        return application
+        return _record_generation_failure(db, application, offer, user.id, exc)
 
     profile = get_or_create_profile(db, user)
     kept, removed = _keep_known_skills(result.referenced_skills, list_skills(db, profile))
@@ -209,6 +210,25 @@ def generate_application(
         title="Candidature prête à valider",
         body=f"{offer.title}{hint}",
         dedup_key=f"application:{application.id}:ready:{application.generation_count}",
+        offer_id=offer.id,
+        application_id=application.id,
+    )
+    db.commit()
+    return application
+
+
+def _record_generation_failure(
+    db: Session, application: Application, offer: Offer, user_id: int, error: AIError
+) -> Application:
+    application.status = "generation_failed"
+    application.error_message = str(error)
+    notify_user(
+        db,
+        user_id,
+        type="application_failed",
+        title="Rédaction impossible",
+        body=f"{offer.title} : {error}",
+        dedup_key=f"application:{application.id}:generation_failed:{application.generation_count}",
         offer_id=offer.id,
         application_id=application.id,
     )
@@ -265,11 +285,12 @@ def send_application(
     db: Session, user: User, application_id: int, settings: Settings, sender: Sender
 ) -> Application:
     """Envoie la candidature validée par l'utilisateur."""
+    # Appartenance d'abord : un autre utilisateur ne doit rien apprendre (404).
+    application = get_owned(db, user, application_id)
     if not settings.email_sending_enabled:
         raise ApplicationError(
             409, "L'envoi d'e-mails est désactivé sur le serveur (EMAIL_SENDING_ENABLED=false)."
         )
-    application = get_owned(db, user, application_id)
     if application.status not in SENDABLE:
         raise ApplicationError(409, "Cette candidature n'est pas prête à être envoyée.")
     if not application.recipient_email:

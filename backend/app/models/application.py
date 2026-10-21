@@ -11,9 +11,10 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+from app.models.offer import Offer
 
 # generating -> pending_approval (prête, à valider) -> sending -> sent | failed | delivery_unknown
 APPLICATION_STATUSES = (
@@ -24,6 +25,7 @@ APPLICATION_STATUSES = (
     "sent",
     "failed",
     "delivery_unknown",
+    "replied",
     "cancelled",
 )
 
@@ -77,3 +79,14 @@ class Application(TimestampMixin, Base):
     sent_message: Mapped[str | None] = mapped_column(Text)
     smtp_message_id: Mapped[str | None] = mapped_column(String(300))
     error_message: Mapped[str | None] = mapped_column(Text)
+
+    # Offre chargée avec la candidature (titre et lien affichés dans les listes).
+    offer: Mapped[Offer] = relationship(lazy="joined")
+
+    @property
+    def offer_title(self) -> str:
+        return self.offer.title
+
+    @property
+    def offer_url(self) -> str:
+        return self.offer.url

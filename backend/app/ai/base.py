@@ -11,6 +11,10 @@ class AINotConfiguredError(AIError):
     pass
 
 
+class AITransientError(AIError):
+    """Erreur temporaire (quota, surcharge, réseau) : une nouvelle tentative différée a du sens."""
+
+
 class AIProvider(Protocol):
     name: str
     model: str

@@ -20,6 +20,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - Migration `9e708b8a9030` : tables `profiles`, `skills`, `notifications` (ajout uniquement).
 - Docker : image du backend et services `migrate`, `api`, `worker`, `beat` ; tout le backend démarre avec `docker compose up -d --build` (FR-007).
 - Configuration SMTP (variables `SMTP_*`, envoi désactivé par défaut) et commande `check-smtp` qui vérifie la connexion sans rien envoyer (FR-041a).
+- Candidatures rédigées par Gemini (modèles gratuits, reprises automatiques), validation puis envoi SMTP, notifications « prête à valider », « envoyée », « échec » ; migration `2497f2b33a23`.
+- Mobile : onglet Rapport, écran de candidature avec validation de l'envoi ; Sources accessibles depuis les Réglages.
 
 ### Supprimé
 - Mobile : écrans sans équivalent backend (candidatures, documents, notifications, profil, administration, temps réel), conservés dans le commit `f55f266`.

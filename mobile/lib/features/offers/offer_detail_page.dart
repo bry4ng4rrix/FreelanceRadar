@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/network/api_exception.dart';
 import '../../core/router/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -10,6 +11,8 @@ import '../../core/utils/links.dart';
 import '../../core/widgets/bottom_bar.dart';
 import '../../core/widgets/feedback.dart';
 import '../../core/widgets/ui.dart';
+import '../applications/applications_providers.dart';
+import '../applications/data/applications_repository.dart';
 import '../sources/sources_providers.dart';
 import 'data/offer_models.dart';
 import 'offers_providers.dart';
@@ -72,7 +75,7 @@ class OfferDetailPage extends ConsumerWidget {
 // Menu « … »
 // ---------------------------------------------------------------------------
 
-enum _MenuAction { markNew, toggleIgnore, copyLink, archive }
+enum _MenuAction { changeStatus, markNew, toggleIgnore, copyLink, archive }
 
 class _MoreMenu extends ConsumerWidget {
   const _MoreMenu({required this.offer});
@@ -82,6 +85,8 @@ class _MoreMenu extends ConsumerWidget {
   Future<void> _onSelected(BuildContext context, WidgetRef ref, _MenuAction action) async {
     final notifier = ref.read(offerDetailProvider(offer.id).notifier);
     switch (action) {
+      case _MenuAction.changeStatus:
+        await _changeStatus(context, ref, offer);
       case _MenuAction.markNew:
         await runAction(
           () => notifier.setStatus(OfferStatus.newOffer),
@@ -129,6 +134,7 @@ class _MoreMenu extends ConsumerWidget {
       position: PopupMenuPosition.under,
       onSelected: (action) => _onSelected(context, ref, action),
       itemBuilder: (_) => [
+        item(_MenuAction.changeStatus, Icons.flag_outlined, 'Changer le statut'),
         if (offer.status != OfferStatus.newOffer)
           item(_MenuAction.markNew, Icons.fiber_new_outlined, 'Marquer comme nouvelle'),
         item(
@@ -147,59 +153,107 @@ class _MoreMenu extends ConsumerWidget {
 // Barre d'actions : annonce + statut
 // ---------------------------------------------------------------------------
 
-class _ActionBar extends ConsumerWidget {
+/// Feuille de choix du statut (statuts posables par l'utilisateur).
+Future<void> _changeStatus(BuildContext context, WidgetRef ref, Offer offer) async {
+  final status = await showAppSheet<OfferStatus>(
+    context,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SheetHeader(title: 'Statut de l\'offre'),
+          for (final status in OfferStatus.userSettable)
+            ListTile(
+              minTileHeight: 52,
+              leading: Icon(status.icon, color: status.color),
+              title: Text(status.label),
+              trailing: status == offer.status
+                  ? const Icon(Icons.check_rounded, color: AppColors.textPrimary)
+                  : null,
+              onTap: () => Navigator.of(context).pop(status),
+            ),
+          const Gap(8),
+        ],
+      ),
+    ),
+  );
+  if (status == null || status == offer.status) return;
+  await runAction(
+    () => ref.read(offerDetailProvider(offer.id).notifier).setStatus(status),
+    success: 'Statut : ${status.label.toLowerCase()}',
+  );
+}
+
+/// Barre d'actions : annonce d'origine et candidature (préparée par l'IA, validée par vous).
+class _ActionBar extends ConsumerStatefulWidget {
   const _ActionBar({required this.offer});
 
   final Offer offer;
 
-  Future<void> _changeStatus(BuildContext context, WidgetRef ref) async {
-    final status = await showAppSheet<OfferStatus>(
-      context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SheetHeader(title: 'Statut de l\'offre'),
-            for (final status in OfferStatus.userSettable)
-              ListTile(
-                minTileHeight: 52,
-                leading: Icon(status.icon, color: status.color),
-                title: Text(status.label),
-                trailing: status == offer.status
-                    ? const Icon(Icons.check_rounded, color: AppColors.textPrimary)
-                    : null,
-                onTap: () => Navigator.of(context).pop(status),
-              ),
-            const Gap(8),
-          ],
-        ),
-      ),
-    );
-    if (status == null || status == offer.status) return;
-    await runAction(
-      () => ref.read(offerDetailProvider(offer.id).notifier).setStatus(status),
-      success: 'Statut : ${status.label.toLowerCase()}',
-    );
+  @override
+  ConsumerState<_ActionBar> createState() => _ActionBarState();
+}
+
+class _ActionBarState extends ConsumerState<_ActionBar> {
+  bool _busy = false;
+
+  Future<void> _prepare() async {
+    setState(() => _busy = true);
+    try {
+      final application = await ref.read(applicationsRepositoryProvider).prepare(widget.offer.id);
+      ref.invalidate(applicationForOfferProvider(widget.offer.id));
+      showToast(
+        'Rédaction lancée : une alerte vous préviendra quand elle sera prête à valider.',
+        kind: ToastKind.success,
+      );
+      if (mounted) await context.push(Routes.application(application.id));
+    } on ApiException catch (error) {
+      // Déjà préparée (autre appareil) : on ouvre la candidature existante.
+      if (error.isConflict) {
+        ref.invalidate(applicationForOfferProvider(widget.offer.id));
+        final existing = await ref.read(applicationForOfferProvider(widget.offer.id).future);
+        if (existing != null && mounted) await context.push(Routes.application(existing.id));
+      } else {
+        showError(error);
+      }
+    } catch (error) {
+      showError(error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => BottomBar(
-    children: [
-      if (offer.url.isNotEmpty)
-        PrimaryButton(
-          label: 'Voir l\'annonce',
-          icon: Icons.open_in_new_rounded,
-          outlined: true,
-          onPressed: () => openExternalUrl(offer.url),
-        ),
-      PrimaryButton(
-        label: 'Changer le statut',
-        icon: Icons.flag_outlined,
-        onPressed: () => _changeStatus(context, ref),
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final offer = widget.offer;
+    final application = ref.watch(applicationForOfferProvider(offer.id));
+    final existing = application.value;
+    return BottomBar(
+      children: [
+        if (offer.url.isNotEmpty)
+          PrimaryButton(
+            label: 'Voir l\'annonce',
+            icon: Icons.open_in_new_rounded,
+            outlined: true,
+            onPressed: () => openExternalUrl(offer.url),
+          ),
+        if (existing != null)
+          PrimaryButton(
+            label: 'Ma candidature',
+            icon: existing.status.icon,
+            onPressed: () => context.push(Routes.application(existing.id)),
+          )
+        else
+          PrimaryButton(
+            label: 'Préparer ma candidature',
+            icon: Icons.auto_awesome_rounded,
+            loading: _busy || application.isLoading,
+            onPressed: _prepare,
+          ),
+      ],
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,9 @@ import 'package:freelanceradar/core/config/app_config.dart';
 import 'package:freelanceradar/core/network/paginated.dart';
 import 'package:freelanceradar/core/theme/app_theme.dart';
 import 'package:freelanceradar/core/widgets/feedback.dart';
+import 'package:freelanceradar/features/applications/application_detail_page.dart';
+import 'package:freelanceradar/features/applications/data/application_models.dart';
+import 'package:freelanceradar/features/applications/data/applications_repository.dart';
 import 'package:freelanceradar/features/dashboard/dashboard_page.dart';
 import 'package:freelanceradar/features/notifications/data/notification_models.dart';
 import 'package:freelanceradar/features/notifications/data/notifications_repository.dart';
@@ -21,6 +24,7 @@ import 'package:freelanceradar/features/profile/data/profile_repository.dart';
 import 'package:freelanceradar/features/profile/edit_profile_page.dart';
 import 'package:freelanceradar/features/profile/profile_page.dart';
 import 'package:freelanceradar/features/profile/skills_page.dart';
+import 'package:freelanceradar/features/report/report_page.dart';
 import 'package:freelanceradar/features/settings/settings_page.dart';
 import 'package:freelanceradar/features/sources/data/source_models.dart';
 import 'package:freelanceradar/features/sources/data/sources_repository.dart';
@@ -192,6 +196,65 @@ class _FixedUnread extends UnreadCountNotifier {
   int build() => 1;
 }
 
+class _FakeApplications implements ApplicationsRepository {
+  final pending = Application.fromJson(applicationJson);
+  final sent = Application.fromJson({
+    ...applicationJson,
+    'id': 8,
+    'status': 'sent',
+    'recipient_email': 'client@example.org',
+    'sent_at': '2026-10-21T11:00:00Z',
+    'sent_from': 'dev@example.com',
+    'sent_to': 'client@example.org',
+    'sent_subject': 'Candidature — Développeur FastAPI',
+    'sent_message': 'Bonjour,\n\nTexte envoyé.\n\nJane Dev',
+  });
+  int sendCalls = 0;
+
+  Application _byId(int id) => id == sent.id ? sent : pending;
+
+  @override
+  Future<Application> prepare(int offerId) async => pending;
+
+  @override
+  Future<Paginated<Application>> list({
+    int page = 1,
+    int pageSize = 20,
+    ApplicationStatus? status,
+    int? offerId,
+  }) async {
+    final items = [pending, sent]
+        .where((a) => status == null || a.status == status)
+        .where((a) => offerId == null || a.offerId == offerId)
+        .toList();
+    return Paginated(items: items, total: items.length, page: 1, pageSize: pageSize);
+  }
+
+  @override
+  Future<Application> get(int id) async => _byId(id);
+
+  @override
+  Future<Application> update(
+    int id, {
+    required String recipientEmail,
+    required String subject,
+    required String message,
+  }) async => _byId(id);
+
+  @override
+  Future<Application> regenerate(int id) async => _byId(id);
+
+  @override
+  Future<Application> send(int id) async {
+    sendCalls++;
+    return sent;
+  }
+
+  @override
+  Future<Application> cancel(int id) async => _byId(id);
+}
+
+late _FakeApplications _applicationsRepo;
 late _FakeProfile _profileRepo;
 late SharedPreferences _prefs;
 
@@ -209,6 +272,7 @@ Future<void> _pump(WidgetTester tester, Widget page, {Size size = const Size(390
         offersRepositoryProvider.overrideWithValue(_FakeOffers()),
         sourcesRepositoryProvider.overrideWithValue(_FakeSources()),
         profileRepositoryProvider.overrideWithValue(_profileRepo),
+        applicationsRepositoryProvider.overrideWithValue(_applicationsRepo),
         notificationsRepositoryProvider.overrideWithValue(_FakeNotifications()),
         unreadCountProvider.overrideWith(_FixedUnread.new),
         serverHealthProvider.overrideWith(
@@ -230,7 +294,10 @@ void main() {
     _prefs = await SharedPreferences.getInstance();
   });
 
-  setUp(() => _profileRepo = _FakeProfile());
+  setUp(() {
+    _profileRepo = _FakeProfile();
+    _applicationsRepo = _FakeApplications();
+  });
 
   for (final (label, size) in [('téléphone', Size(390, 844)), ('grand écran', Size(1280, 800))]) {
     testWidgets('DashboardPage ($label)', (tester) async {
@@ -256,7 +323,8 @@ void main() {
     testWidgets('OfferDetailPage ($label)', (tester) async {
       await _pump(tester, const OfferDetailPage(offerId: 12), size: size);
       expect(find.text('Relancer lundi'), findsOneWidget);
-      expect(find.text('Changer le statut'), findsOneWidget);
+      // Une candidature existe pour cette offre : accès direct.
+      expect(find.text('Ma candidature'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -320,6 +388,65 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  for (final (label, size) in [('téléphone', Size(390, 844)), ('grand écran', Size(1280, 800))]) {
+    testWidgets('ReportPage ($label)', (tester) async {
+      await _pump(tester, const ReportPage(), size: size);
+      expect(find.text('Envoyées'), findsOneWidget);
+      expect(find.text('À VALIDER'), findsOneWidget);
+      expect(find.text('RÉPONSES REÇUES'), findsOneWidget);
+      expect(find.textContaining('→ client@example.org'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ApplicationDetailPage : brouillon à valider ($label)', (tester) async {
+      await _pump(tester, const ApplicationDetailPage(applicationId: 7), size: size);
+      expect(find.text('À vérifier avant l\'envoi'), findsOneWidget);
+      expect(find.text('Valider l\'envoi'), findsOneWidget);
+      expect(find.text('Rédiger à nouveau'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ApplicationDetailPage : envoyée, lecture seule ($label)', (tester) async {
+      await _pump(tester, const ApplicationDetailPage(applicationId: 8), size: size);
+      expect(find.text('MESSAGE ENVOYÉ'), findsOneWidget);
+      expect(find.text('Valider l\'envoi'), findsNothing);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('Envoi : impossible sans destinataire ni confirmation explicite', (tester) async {
+    await _pump(tester, const ApplicationDetailPage(applicationId: 7));
+    // Sans destinataire : refusé avant même le récapitulatif.
+    await tester.tap(find.text('Valider l\'envoi'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Envoyer la candidature'), findsNothing);
+    expect(_applicationsRepo.sendCalls, 0);
+
+    // Premier champ du brouillon : le destinataire.
+    await tester.enterText(find.byType(TextFormField).first, 'client@example.org');
+    await tester.tap(find.text('Valider l\'envoi'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.text('Envoyer la candidature'), findsOneWidget);
+    // Bouton inactif tant que la case n'est pas cochée.
+    await tester.tap(find.text('Envoyer la candidature'));
+    await tester.pump();
+    expect(_applicationsRepo.sendCalls, 0);
+
+    await tester.ensureVisible(find.byType(Checkbox));
+    await tester.pump();
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    await tester.tap(find.text('Envoyer la candidature'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(_applicationsRepo.sendCalls, 1);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('EditProfilePage : enregistre le profil complet', (tester) async {
     await _pump(tester, const EditProfilePage());

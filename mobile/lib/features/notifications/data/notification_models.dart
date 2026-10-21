@@ -7,7 +7,20 @@ import '../../../core/utils/json.dart';
 enum NotificationType {
   newOffers('new_offers', 'Nouvelles offres', Icons.work_outline_rounded, AppColors.info),
   sourceError('source_error', 'Source en erreur', Icons.error_outline_rounded, AppColors.danger),
-  sourceBlocked('source_blocked', 'Source bloquée', Icons.block_rounded, AppColors.warning);
+  sourceBlocked('source_blocked', 'Source bloquée', Icons.block_rounded, AppColors.warning),
+  applicationReady(
+    'application_ready',
+    'Candidature à valider',
+    Icons.rate_review_outlined,
+    AppColors.violet,
+  ),
+  applicationSent('application_sent', 'Candidature envoyée', Icons.send_rounded, AppColors.success),
+  applicationFailed(
+    'application_failed',
+    'Candidature en échec',
+    Icons.error_outline_rounded,
+    AppColors.danger,
+  );
 
   const NotificationType(this.api, this.label, this.icon, this.color);
 
@@ -34,6 +47,7 @@ class AppNotification {
     this.offerId,
     this.sourceId,
     this.collectionRunId,
+    this.applicationId,
     this.createdAt,
     this.readAt,
   });
@@ -45,6 +59,7 @@ class AppNotification {
   final int? offerId;
   final int? sourceId;
   final int? collectionRunId;
+  final int? applicationId;
   final DateTime? createdAt;
   final DateTime? readAt;
 
@@ -59,6 +74,7 @@ class AppNotification {
     offerId: parseInt(json['offer_id']),
     sourceId: parseInt(json['source_id']),
     collectionRunId: parseInt(json['collection_run_id']),
+    applicationId: parseInt(json['application_id']),
     createdAt: parseDate(json['created_at']),
     readAt: parseDate(json['read_at']),
   );

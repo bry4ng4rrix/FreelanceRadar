@@ -16,7 +16,7 @@ const _destinations = [
   _Destination('Accueil', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
   _Destination('Offres', Icons.work_outline_rounded, Icons.work_rounded),
   _Destination('Alertes', Icons.notifications_none_rounded, Icons.notifications_rounded),
-  _Destination('Sources', Icons.rss_feed_outlined, Icons.rss_feed_rounded),
+  _Destination('Rapport', Icons.insights_outlined, Icons.insights_rounded),
   _Destination('Profil', Icons.person_outline_rounded, Icons.person_rounded),
 ];
 

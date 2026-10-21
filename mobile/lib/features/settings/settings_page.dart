@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/app_user.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
+import '../../core/router/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -89,6 +91,17 @@ class SettingsPage extends ConsumerWidget {
                 title: 'Changer de serveur',
                 subtitle: 'Une reconnexion sera nécessaire',
                 onTap: () => showAppSheet<void>(context, builder: (_) => const ServerSheet()),
+              ),
+            ],
+          ),
+          const SectionHeader('Collecte'),
+          MenuGroup(
+            children: [
+              MenuTile(
+                icon: Icons.rss_feed_rounded,
+                title: 'Sources',
+                subtitle: 'Sites collectés, tests, historique des collectes',
+                onTap: () => context.push(Routes.sources),
               ),
             ],
           ),

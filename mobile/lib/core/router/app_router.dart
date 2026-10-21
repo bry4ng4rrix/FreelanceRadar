@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/applications/application_detail_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/splash_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
@@ -11,6 +12,7 @@ import '../../features/offers/offers_page.dart';
 import '../../features/profile/edit_profile_page.dart';
 import '../../features/profile/profile_page.dart';
 import '../../features/profile/skills_page.dart';
+import '../../features/report/report_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/sources/source_detail_page.dart';
 import '../../features/sources/sources_page.dart';
@@ -77,13 +79,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: Routes.sources,
-                builder: (_, _) => const SourcesPage(),
-                routes: [page(':sourceId', (s) => SourceDetailPage(sourceId: id(s, 'sourceId')))],
-              ),
-            ],
+            routes: [GoRoute(path: Routes.report, builder: (_, _) => const ReportPage())],
           ),
           StatefulShellBranch(
             routes: [
@@ -99,6 +95,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: Routes.sources,
+        builder: (_, _) => const SourcesPage(),
+        routes: [
+          GoRoute(
+            path: ':sourceId',
+            builder: (_, s) => SourceDetailPage(sourceId: id(s, 'sourceId')),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/applications/:applicationId',
+        builder: (_, s) => ApplicationDetailPage(applicationId: id(s, 'applicationId')),
       ),
     ],
   );

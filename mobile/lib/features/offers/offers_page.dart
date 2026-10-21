@@ -234,7 +234,7 @@ class _OffersPageState extends ConsumerState<OffersPage> {
                           'Les offres collectées par vos sources apparaîtront ici. '
                           'Lancez une collecte depuis l\'onglet Sources.',
                       actionLabel: 'Voir les sources',
-                      onAction: () => context.go(Routes.sources),
+                      onAction: () => context.push(Routes.sources),
                     ),
             ),
           ),

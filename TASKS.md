@@ -28,6 +28,11 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [x] FR-041a — Configuration SMTP (`mail.labeltechnology.mg:465`, TLS) et commande `check-smtp` (connexion + authentification, aucun envoi).
   - Vérification : 6 tests sur serveur simulé (dont absence du mot de passe dans les messages) ; authentification réelle réussie une fois, depuis l'hôte puis depuis le conteneur, sans envoi.
 
+- [x] FR-030a — IA Gemini (SDK officiel `google-genai` 2.32) : rédaction structurée et validée (objet, message, langue, compétences citées, avertissements, confiance) ; modèles gratuits en cascade (`gemini-3.8-flash` → `gemini-3.5-flash-lite` → `gemini-3.1-flash-lite`) ; reprises Celery sur erreur temporaire.
+- [x] FR-040a / FR-041b — Candidatures : préparation par l'IA à partir du profil et des compétences, notification « prête à valider », relecture et modification, envoi SMTP après confirmation explicite (réservation anti-double envoi, limite quotidienne), notification « Candidature envoyée → destinataire » ; migration `2497f2b33a23`.
+- [x] FR-070c — Mobile : onglet Rapport (envoyées, à valider, échecs), écran de candidature avec validation de l'envoi, Sources déplacées dans les Réglages.
+  - Vérification : backend 132 tests (Gemini et SMTP simulés, aucun envoi), ruff, mypy strict ; mobile 52 tests, analyse sans remarque ; contrat Dart = OpenAPI. Appel Gemini réel : modèle gratuit OK et injection de l'annonce ignorée, mais réponse « ... » observée une fois (validation durcie depuis) puis 503 « forte demande » : génération réelle complète **non revérifiée**. Aucun e-mail réel envoyé.
+
 ## À faire — backend (ordre recommandé)
 
 - [ ] FR-013 — Ajuster la configuration des sources selon `PLANNING.md` §5 (Remotive ≥ 360 min, Upwork désactivées) — **décision utilisateur requise**.
@@ -36,9 +41,10 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [ ] FR-021 — Upload privé du CV (PDF/DOCX, taille et type contrôlés, jamais journalisé).
 - [ ] FR-022 — Score de pertinence explicable (raisons +/−, seuil configurable) et détection des compétences.
 - [ ] FR-023 — Tableau de bord / statistiques.
-- [ ] FR-030 — IA : interface commune, Gemini, Ollama (`gemma3:4b` dispo en local), sorties validées.
-- [ ] FR-040 — Candidatures : brouillons versionnés, approbation, anti-doublon.
-- [ ] FR-041b — Envoi SMTP des candidatures (sans envoi réel en test), statuts distincts, idempotence.
+- [ ] FR-030b — Ollama en alternative (`gemma3:4b` disponible en local) et choix du fournisseur sans redéploiement.
+- [ ] FR-031 — Push FCM pour « candidature prête à valider » (projet Firebase de l'utilisateur requis).
+- [ ] FR-061 — n8n : déclenchement quotidien des collectes (décision utilisateur requise, voir PLANNING).
+- [ ] FR-041c — Pièces jointes (CV) et premier envoi réel autorisé par l'utilisateur.
 - [ ] FR-050 — IMAP et association prudente des réponses.
 - [ ] FR-051b — Notifications push FCM (projet Firebase requis) et préférences par type.
 - [ ] FR-013b — Connecteurs HTML/Playwright, source par source, après vérification des CGU.

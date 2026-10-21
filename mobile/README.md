@@ -61,7 +61,9 @@ storeFile=/home/<vous>/.android-keys/<cle>.jks
 | Connexion | Email + mot de passe, choix du serveur (pas d'inscription : comptes créés sur le serveur) | `POST /auth/login`, `/auth/refresh`, `GET /auth/me`, `GET /ready` |
 | Accueil | Compteurs (offres, nouvelles, pertinentes, favorites, sources actives / en erreur), dernières offres, état des sources | `GET /offers` (totaux par statut), `GET /sources` |
 | Offres | Recherche, filtres (statut, source, période, archivées), tri, favoris, ignorer, archiver ; détail avec notes et lien vers l'annonce | `GET /offers`, `GET/PATCH /offers/{id}`, `POST /offers/{id}/archive` |
-| Sources | Liste filtrable, activation, création / modification, test sans écriture, collecte manuelle, historique | `/sources`, `/sources/{id}`, `/test`, `/run`, `/runs` |
+| Rapport | Candidatures envoyées, à valider, en échec ; réponses reçues (après IMAP) | `GET /applications` |
+| Candidature (depuis une offre) | Rédaction par l'IA, relecture, destinataire, validation explicite de l'envoi | `/applications/prepare`, `PATCH`, `/regenerate`, `/send`, `/cancel` |
+| Sources (Réglages) | Liste filtrable, activation, création / modification, test sans écriture, collecte manuelle, historique | `/sources`, `/sources/{id}`, `/test`, `/run`, `/runs` |
 | Alertes | Notifications (nouvelles offres, sources en erreur ou bloquées), filtres, tout marquer comme lu ; badge relu toutes les 60 s | `/notifications`, `/unread-count`, `/{id}/read`, `/mark-all-read` |
 | Profil | Résumé et complétude, modification (identité, coordonnées, liens, disponibilité, tarif, langues, recherche), compétences avec niveau | `GET/PATCH /profile`, `/profile/skills` |
 | Réglages (depuis Profil) | Compte, état du serveur (PostgreSQL, Redis), changement de serveur, documentation de l'API, déconnexion (révoque toutes les sessions) | `GET /ready`, `POST /auth/logout` |
