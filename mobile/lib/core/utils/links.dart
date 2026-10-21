@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/widgets/feedback.dart';
+import '../widgets/feedback.dart';
 
 /// Ouvre un lien web dans le navigateur (ajoute `https://` si besoin).
 Future<void> openExternalUrl(String url) async {

@@ -12,7 +12,7 @@ import '../../core/widgets/ui.dart';
 import 'widgets/brand_mark.dart';
 import 'widgets/server_sheet.dart';
 
-/// Connexion (et création de compte si le serveur l'autorise).
+/// Connexion. Les comptes se créent sur le serveur (`python -m app.cli create-user`).
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -24,7 +24,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _registerMode = false;
   bool _obscure = true;
   bool _loading = false;
   String? _error;
@@ -49,13 +48,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _loading = true;
       _error = null;
     });
-    final auth = ref.read(authControllerProvider.notifier);
     try {
-      if (_registerMode) {
-        await auth.register(email: _email.text, password: _password.text);
-      } else {
-        await auth.login(email: _email.text, password: _password.text);
-      }
+      await ref
+          .read(authControllerProvider.notifier)
+          .login(email: _email.text, password: _password.text);
     } catch (error) {
       if (mounted) setState(() => _error = ApiException.describe(error));
     } finally {
@@ -84,15 +80,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     children: [
                       const BrandMark(size: 52),
                       const Gap(36),
-                      Text(
-                        _registerMode ? 'Créer un compte' : 'Bon retour.',
-                        style: theme.displaySmall,
-                      ),
+                      Text('Bon retour.', style: theme.displaySmall),
                       const Gap(8),
                       Text(
-                        _registerMode
-                            ? 'Le premier compte créé devient administrateur.'
-                            : 'Vos offres, vos candidatures, au même endroit.',
+                        'Les missions freelance de vos sources, au même endroit.',
                         style: theme.bodyLarge?.copyWith(color: AppColors.textSecondary),
                       ),
                       const Gap(36),
@@ -111,10 +102,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         controller: _password,
                         obscureText: _obscure,
                         textInputAction: TextInputAction.done,
-                        autofillHints: [
-                          _registerMode ? AutofillHints.newPassword : AutofillHints.password,
-                        ],
-                        validator: _registerMode ? Validators.password : Validators.required,
+                        autofillHints: const [AutofillHints.password],
+                        validator: Validators.required,
                         onSubmitted: (_) => _submit(),
                         suffix: IconButton(
                           tooltip: _obscure ? 'Afficher' : 'Masquer',
@@ -128,24 +117,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       if (_error != null) ...[const Gap(16), _ErrorBanner(message: _error!)],
                       const Gap(28),
                       PrimaryButton(
-                        label: _registerMode ? 'Créer mon compte' : 'Se connecter',
+                        label: 'Se connecter',
                         loading: _loading,
                         onPressed: _submit,
                       ),
-                      const Gap(12),
-                      Center(
-                        child: TextButton(
-                          onPressed: _loading
-                              ? null
-                              : () => setState(() {
-                                  _registerMode = !_registerMode;
-                                  _error = null;
-                                }),
-                          child: Text(
-                            _registerMode ? 'J\'ai déjà un compte' : 'Créer un compte',
-                            style: const TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ),
+                      const Gap(16),
+                      Text(
+                        'Pas encore de compte ? Il se crée sur le serveur, '
+                        'avec la commande create-user.',
+                        style: theme.bodySmall?.copyWith(color: AppColors.textTertiary),
                       ),
                       const Gap(32),
                       const Divider(),

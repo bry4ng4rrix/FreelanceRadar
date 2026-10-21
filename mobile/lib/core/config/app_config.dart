@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Serveur de production par défaut (modifiable dans l'écran de connexion et les réglages).
-const kDefaultServerUrl = 'http://185.215.167.79:8000';
+/// Serveur par défaut : backend local (Linux). Sur téléphone, saisir l'adresse du PC
+/// (`http://<IP-du-PC>:8000`) ou du serveur HTTPS dans l'écran de connexion.
+const kDefaultServerUrl = 'http://localhost:8000';
 const kApiPrefix = '/api/v1';
-const kAppName = 'Garrix Offre';
+const kAppName = 'FreelanceRadar';
+const kAppVersion = '1.0.0';
 
 /// Injecté dans `main()` (voir `ProviderScope.overrides`).
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -26,7 +28,7 @@ class ServerUrlNotifier extends Notifier<String> {
 
   Future<void> reset() => update(kDefaultServerUrl);
 
-  /// `185.215.167.79:8000/` -> `http://185.215.167.79:8000`
+  /// `192.168.1.10:8000/` -> `http://192.168.1.10:8000`
   static String normalize(String url) {
     var value = url.trim();
     if (value.isEmpty) return kDefaultServerUrl;

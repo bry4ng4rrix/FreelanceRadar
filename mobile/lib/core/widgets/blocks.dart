@@ -2,51 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/feedback.dart';
-import '../../../core/widgets/ui.dart';
-import '../data/admin_labels.dart';
+import '../network/api_exception.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
+import '../utils/links.dart';
+import 'feedback.dart';
+import 'ui.dart';
 
-/// Petits composants partagés par les écrans d'administration.
-
-/// Affiche une erreur (avec les messages propres à l'administration).
-void showAdminError(Object error) => showToast(adminErrorMessage(error), kind: ToastKind.error);
-
-/// Exécute une action et affiche le résultat. Renvoie null en cas d'erreur.
-Future<T?> runAdmin<T>(Future<T> Function() action, {String? success}) async {
-  try {
-    final result = await action();
-    if (success != null) showToast(success, kind: ToastKind.success);
-    return result;
-  } catch (error) {
-    showAdminError(error);
-    return null;
-  }
-}
-
-/// Ouvre un lien externe (site, email, téléphone).
-Future<void> openLink(String url) async {
-  var uri = Uri.tryParse(url.trim());
-  if (uri == null) return;
-  if (!uri.hasScheme) uri = Uri.tryParse('https://${url.trim()}');
-  if (uri == null) return;
-  try {
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok) showToast('Impossible d\'ouvrir le lien.', kind: ToastKind.error);
-  } catch (_) {
-    showToast('Impossible d\'ouvrir le lien.', kind: ToastKind.error);
-  }
-}
-
-/// Copie un texte dans le presse-papiers.
-Future<void> copyText(String text, {String message = 'Copié'}) async {
-  await Clipboard.setData(ClipboardData(text: text));
-  showToast(message, kind: ToastKind.success);
-}
+/// Blocs d'interface partagés : JSON, filtres, encadrés, feuilles de détail et de formulaire.
 
 /// Pastille de couleur (état d'un service, d'une source).
 class StatusDot extends StatelessWidget {
@@ -621,7 +585,7 @@ class InlineError extends StatelessWidget {
         const Gap(12),
         Expanded(
           child: Text(
-            adminErrorMessage(error),
+            ApiException.describe(error),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
           ),
         ),
@@ -634,15 +598,3 @@ class InlineError extends StatelessWidget {
 /// Découpe une saisie « a, b, c » en liste.
 List<String> splitList(String text) =>
     text.split(RegExp(r'[,\n]')).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-
-/// Validateur d'email facultatif.
-String? optionalEmail(String? value) {
-  if (value == null || value.trim().isEmpty) return null;
-  return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim()) ? null : 'Email invalide';
-}
-
-/// Validateur de téléphone facultatif (même règle que le serveur).
-String? optionalPhone(String? value) {
-  if (value == null || value.trim().isEmpty) return null;
-  return RegExp(r'^\+?[0-9 ().-]{6,30}$').hasMatch(value.trim()) ? null : 'Numéro invalide';
-}

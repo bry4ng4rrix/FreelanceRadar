@@ -27,9 +27,11 @@ class AuthState {
   bool get isSignedIn => status == AuthStatus.signedIn;
 }
 
-/// Session de l'utilisateur : restauration au démarrage, connexion, inscription, déconnexion.
+/// Session de l'utilisateur : restauration au démarrage, connexion, déconnexion.
+///
+/// Pas d'inscription : le serveur crée les comptes en ligne de commande (`app.cli create-user`).
 class AuthController extends Notifier<AuthState> {
-  static const _cachedUserKey = 'garrix_cached_user';
+  static const _cachedUserKey = 'freelanceradar_cached_user';
 
   @override
   AuthState build() {
@@ -71,18 +73,10 @@ class AuthController extends Notifier<AuthState> {
     state = AuthState.signedIn(await _fetchMe());
   }
 
-  Future<void> register({required String email, required String password}) async {
-    await _api.post('/auth/register', body: {'email': email.trim(), 'password': password});
-    await login(email: email, password: password);
-  }
-
-  Future<void> logout({bool allDevices = false}) async {
-    final refreshToken = _tokens.refreshToken;
+  /// Déconnexion. Le serveur révoque tous les jetons du compte (sur tous les appareils).
+  Future<void> logout() async {
     try {
-      await _api.post(
-        '/auth/logout',
-        body: {'refresh_token': refreshToken, 'all_devices': allDevices},
-      );
+      await _api.post('/auth/logout');
     } catch (_) {
       // Déconnexion locale même si le serveur est injoignable.
     }
@@ -94,12 +88,6 @@ class AuthController extends Notifier<AuthState> {
     if (state.status == AuthStatus.signedIn) {
       unawaited(_signOut(message: 'Session expirée. Reconnectez-vous.'));
     }
-  }
-
-  /// Relit l'utilisateur (après un changement de rôle, par exemple).
-  Future<void> refreshUser() async {
-    if (!state.isSignedIn) return;
-    state = AuthState.signedIn(await _fetchMe());
   }
 
   Future<AppUser> _fetchMe() async {
@@ -129,8 +117,3 @@ final authControllerProvider = NotifierProvider<AuthController, AuthState>(AuthC
 
 /// Utilisateur connecté (null si déconnecté).
 final currentUserProvider = Provider<AppUser?>((ref) => ref.watch(authControllerProvider).user);
-
-/// Vrai si l'utilisateur connecté est administrateur.
-final isAdminProvider = Provider<bool>(
-  (ref) => ref.watch(currentUserProvider)?.isSuperuser ?? false,
-);

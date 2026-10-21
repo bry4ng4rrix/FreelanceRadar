@@ -1,6 +1,5 @@
 // ignore_for_file: prefer_initializing_formals (paramètres publics, champs privés)
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,10 +12,9 @@ import 'paginated.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 
-/// Client HTTP de l'API Garrix Offre.
+/// Client HTTP de l'API FreelanceRadar.
 ///
-/// - préfixe `/api/v1` automatique : on écrit `api.get('/jobs')` ;
-/// - déballe l'enveloppe `{"success": true, "data": ...}` et renvoie directement `data` ;
+/// - préfixe `/api/v1` automatique : on écrit `api.get('/offers')` ;
 /// - lève [ApiException] (message en français dans `userMessage`) en cas d'erreur ;
 /// - ajoute le token et le renouvelle automatiquement (une seule fois) sur une réponse 401.
 class ApiClient {
@@ -30,8 +28,8 @@ class ApiClient {
       baseUrl: '$serverUrl$kApiPrefix',
       connectTimeout: const Duration(seconds: 15),
       sendTimeout: const Duration(seconds: 60),
-      // Large : la rédaction par une IA locale (Ollama sans GPU) peut prendre plusieurs minutes.
-      receiveTimeout: const Duration(minutes: 10),
+      // Test d'une source : le serveur télécharge le flux (délai serveur : 20 s par défaut).
+      receiveTimeout: const Duration(seconds: 60),
       headers: {'Accept': 'application/json'},
       listFormat: ListFormat.multi,
     );
@@ -48,7 +46,7 @@ class ApiClient {
   Future<bool>? _refreshing;
 
   // ---------------------------------------------------------------------------
-  // Requêtes : renvoient le champ `data` de l'enveloppe (null pour une réponse 204).
+  // Requêtes : renvoient le corps JSON décodé (null pour une réponse 204).
   // ---------------------------------------------------------------------------
 
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) =>
@@ -92,74 +90,11 @@ class ApiClient {
     return Paginated.fromJson(data, fromJson);
   }
 
-  /// Envoi de fichier en multipart (`file` + champs de formulaire).
-  Future<dynamic> upload(
-    String path, {
-    required String filePath,
-    String? filename,
-    String field = 'file',
-    Map<String, dynamic>? fields,
-    void Function(int sent, int total)? onProgress,
-  }) async {
-    final form = FormData.fromMap({
-      ...?_clean(fields),
-      field: await MultipartFile.fromFile(filePath, filename: filename),
-    });
-    return _send(() => _dio.post<dynamic>(path, data: form, onSendProgress: onProgress));
-  }
-
-  /// Envoi de fichier depuis des octets (quand aucun chemin n'est disponible).
-  Future<dynamic> uploadBytes(
-    String path, {
-    required Uint8List bytes,
-    required String filename,
-    String field = 'file',
-    Map<String, dynamic>? fields,
-  }) async {
-    final form = FormData.fromMap({
-      ...?_clean(fields),
-      field: MultipartFile.fromBytes(bytes, filename: filename),
-    });
-    return _send(() => _dio.post<dynamic>(path, data: form));
-  }
-
-  /// Téléchargement brut (photo, document).
-  Future<Uint8List> download(String path, {Map<String, dynamic>? query}) async {
+  /// État du serveur (`GET /api/v1/ready` : base de données et Redis).
+  /// Renvoie le corps même en 503 (serveur joignable mais dépendance en panne).
+  Future<Map<String, dynamic>> ready() async {
     try {
-      final response = await _dio.get<List<int>>(
-        path,
-        queryParameters: _clean(query),
-        options: Options(responseType: ResponseType.bytes),
-      );
-      return Uint8List.fromList(response.data ?? const []);
-    } on DioException catch (error) {
-      throw ApiException.fromDio(error);
-    }
-  }
-
-  /// URL absolue d'un chemin de l'API (ex. pour `Image.network`).
-  String url(String path) => '$serverUrl$kApiPrefix$path';
-
-  /// En-têtes d'authentification (ex. pour `Image.network(headers: ...)`).
-  Map<String, String> get authHeaders {
-    final token = _tokens.accessToken;
-    return token == null ? const {} : {'Authorization': 'Bearer $token'};
-  }
-
-  /// URL du WebSocket temps réel.
-  Uri websocketUri() {
-    final base = Uri.parse(serverUrl);
-    return base.replace(
-      scheme: base.scheme == 'https' ? 'wss' : 'ws',
-      path: '$kApiPrefix/ws',
-      queryParameters: {'token': _tokens.accessToken ?? ''},
-    );
-  }
-
-  /// Santé du serveur (hors `/api/v1`).
-  Future<Map<String, dynamic>> health() async {
-    try {
-      final response = await _refreshDio.get<dynamic>('$serverUrl/ready');
+      final response = await _refreshDio.get<dynamic>('/ready');
       return asJsonMap(response.data);
     } on DioException catch (error) {
       final data = error.response?.data;
@@ -185,7 +120,7 @@ class ApiClient {
         '/auth/refresh',
         data: {'refresh_token': refreshToken},
       );
-      final data = asJsonMap(_unwrap(response));
+      final data = asJsonMap(response.data);
       await _tokens.save(
         accessToken: data['access_token'] as String,
         refreshToken: data['refresh_token'] as String,
@@ -203,7 +138,7 @@ class ApiClient {
   // Interne
   // ---------------------------------------------------------------------------
 
-  static const _publicPaths = {'/auth/login', '/auth/register', '/auth/refresh'};
+  static const _publicPaths = {'/auth/login', '/auth/refresh', '/health', '/ready'};
 
   void _onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final token = _tokens.accessToken;
@@ -242,16 +177,10 @@ class ApiClient {
 
   Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
     try {
-      return _unwrap(await request());
+      return (await request()).data;
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
-  }
-
-  static dynamic _unwrap(Response<dynamic> response) {
-    final data = response.data;
-    if (data is Map && data.containsKey('success')) return data['data'];
-    return data;
   }
 
   /// Retire les valeurs nulles / vides et convertit dates et énumérations.

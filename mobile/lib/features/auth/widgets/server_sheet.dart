@@ -10,7 +10,7 @@ import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/form_fields.dart';
 import '../../../core/widgets/ui.dart';
 
-/// Choix de l'adresse du serveur, avec test de connexion (`GET /ready`).
+/// Choix de l'adresse du serveur, avec test de connexion (`GET /api/v1/ready`).
 /// Utilisée par l'écran de connexion et les réglages.
 class ServerSheet extends ConsumerStatefulWidget {
   const ServerSheet({super.key});
@@ -50,9 +50,9 @@ class _ServerSheetState extends ConsumerState<ServerSheet> {
           connectTimeout: const Duration(seconds: 8),
           receiveTimeout: const Duration(seconds: 8),
         ),
-      ).get<dynamic>('$url/ready');
+      ).get<dynamic>('$url$kApiPrefix/ready');
       final data = response.data;
-      final ok = data is Map && data['status'] == 'ready';
+      final ok = data is Map && data['status'] == 'ok';
       setState(() {
         _test = ok ? _TestState.ok : _TestState.failed;
         _detail = ok
@@ -111,7 +111,7 @@ class _ServerSheetState extends ConsumerState<ServerSheet> {
             Text('Serveur', style: theme.titleLarge),
             const Gap(6),
             Text(
-              'Adresse de l\'API Garrix Offre (avec le port).',
+              'Adresse de l\'API FreelanceRadar (avec le port).',
               style: theme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
             const Gap(20),

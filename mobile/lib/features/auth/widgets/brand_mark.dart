@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 
-/// Logo : carré blanc arrondi avec un « G » noir.
+/// Logo : carré blanc arrondi avec un « F » noir.
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 48});
 
@@ -19,7 +19,7 @@ class BrandMark extends StatelessWidget {
     ),
     alignment: Alignment.center,
     child: Text(
-      'G',
+      'F',
       style: TextStyle(
         fontFamily: AppTheme.fontFamily,
         fontSize: size * 0.5,

@@ -12,8 +12,8 @@ import '../config/app_config.dart';
 class TokenStorage {
   TokenStorage(this._prefs);
 
-  static const _accessKey = 'garrix_access_token';
-  static const _refreshKey = 'garrix_refresh_token';
+  static const _accessKey = 'freelanceradar_access_token';
+  static const _refreshKey = 'freelanceradar_refresh_token';
 
   final SharedPreferences _prefs;
   final FlutterSecureStorage _secure = const FlutterSecureStorage();

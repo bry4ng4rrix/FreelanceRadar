@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/ui.dart';
+import 'ui.dart';
 
 /// [BottomActionBar] utilisable dans `Scaffold.bottomNavigationBar`.
 ///
