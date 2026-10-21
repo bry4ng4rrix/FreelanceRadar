@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Données fictives. Structure calquée sur un flux We Work Remotely (élément <region>). -->
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Flux de test FreelanceRadar</title>
+    <link>https://jobs.example.com/</link>
+    <description>Offres fictives</description>
+    <item>
+      <title>Acme Fictive: Développeur FastAPI senior</title>
+      <region>Anywhere in the World</region>
+      <category>Back-End Programming</category>
+      <description>&lt;p&gt;Mission &lt;strong&gt;FastAPI&lt;/strong&gt; &amp;amp; PostgreSQL.&lt;/p&gt;&lt;script&gt;alert(1)&lt;/script&gt;&lt;ul&gt;&lt;li&gt;Python 3.12&lt;/li&gt;&lt;/ul&gt;</description>
+      <pubDate>Mon, 19 Oct 2026 08:30:00 +0000</pubDate>
+      <guid>https://jobs.example.com/remote-jobs/acme-fastapi</guid>
+      <link>https://jobs.example.com/remote-jobs/acme-fastapi?utm_source=rss</link>
+    </item>
+    <item>
+      <title>Globex Exemple: Développeur Flutter</title>
+      <region>Europe</region>
+      <category>Mobile</category>
+      <description>Application mobile Flutter pour Android.</description>
+      <pubDate>Tue, 20 Oct 2026 10:00:00 +0000</pubDate>
+      <guid>https://jobs.example.com/remote-jobs/globex-flutter</guid>
+      <link>https://jobs.example.com/remote-jobs/globex-flutter</link>
+    </item>
+    <item>
+      <title>Globex Exemple: Développeur Flutter (republication)</title>
+      <description>Même offre republiée avec le même identifiant.</description>
+      <guid>https://jobs.example.com/remote-jobs/globex-flutter</guid>
+      <link>https://jobs.example.com/remote-jobs/globex-flutter</link>
+    </item>
+    <item>
+      <title>Offre sans lien</title>
+      <description>Item invalide : pas d'URL.</description>
+      <guid>no-link-item</guid>
+    </item>
+  </channel>
+</rss>

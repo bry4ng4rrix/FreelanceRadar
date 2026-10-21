@@ -10,16 +10,17 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
   - Livrable : audit dans `PLANNING.md` §1 et §4.
   - Critères : structure, dépendances, commandes disponibles, risques et lacunes identifiés.
 
-## À faire — Phase 1 (Fondations)
-
-- [ ] FR-002 — Initialiser le dépôt et l'outillage Python.
+- [ ] FR-002 — Initialiser le dépôt et l'outillage Python. **(code livré, commit en attente)**
   - Dépendance : FR-001 + validation des décisions D1, D2, D8, D9.
   - Contenu : recréer `.venv` en 3.12 via `uv` (l'actuel est cassé, suppression soumise à accord), `.gitignore` (dont `.venv/`, `.env`), `pyproject.toml` (Python 3.12, FastAPI, Pydantic v2, ruff, mypy, pytest), `app/main.py` avec `GET /health`, `app/core/config.py` (pydantic-settings), `.env.example`, premier test.
   - Critères : `uv sync` OK ; `ruff check .`, `ruff format --check .`, `mypy app`, `pytest` passent ; `GET /health` = 200 en test ; aucun secret dans Git ; premier commit sur `main`.
+  - Fait : socle FastAPI (`app/`), erreurs standardisées, logs JSON, `/api/v1/health`, 5 tests. Reste hors tâche : premier commit et renommage `main` (attendent votre accord) ; ancien venv conservé dans `.venv.old-py314/`.
+
+## À faire — Phase 1 (Fondations)
 
 - [ ] FR-003 — Docker Compose de développement : PostgreSQL, Redis, API.
   - Dépendance : FR-002.
-  - Critères : `docker compose up -d` → services `healthy` ; volumes persistants (données conservées après `docker compose restart`) ; ports liés à `127.0.0.1` ; `/health` vérifie DB et Redis.
+  - Critères : `docker compose up -d` → services `healthy` ; volumes persistants (données conservées après `docker compose restart`) ; ports liés à `127.0.0.1` ; `GET /api/v1/ready` vérifie DB et Redis (`/health` reste un simple test de vie).
 
 - [ ] FR-004 — SQLAlchemy 2 + Alembic, base de test isolée.
   - Dépendance : FR-003.

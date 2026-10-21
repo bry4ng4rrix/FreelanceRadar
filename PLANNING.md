@@ -53,8 +53,18 @@ Celery worker ─► collecteurs (RSS, HTTP/HTML, Playwright), IA (Gemini/Ollama
 
 ## 5. Commandes
 
-Aucune commande projet n'existe encore (pas de `pyproject.toml`, Makefile, Compose, Alembic ni tests). Commandes système vérifiées : `uv`, `docker compose`, `psql`, `ollama`. Elles seront ajoutées ici au fur et à mesure qu'elles sont vérifiées (prévu en FR-002) :
-démarrage (`docker compose up -d`), migrations (`alembic upgrade head`), tests (`pytest`), lint (`ruff check`, `ruff format --check`, `mypy app`).
+Vérifiées le 2026-10-21 (FR-002) :
+
+| Usage | Commande |
+|---|---|
+| Installer / synchroniser | `uv sync` |
+| Démarrer l'API (dev) | `uv run uvicorn app.main:app --reload` → http://127.0.0.1:8000/docs |
+| Tests | `uv run pytest` |
+| Lint | `uv run ruff check .` |
+| Format | `uv run ruff format --check .` |
+| Typage | `uv run mypy app tests` |
+
+À venir : `docker compose up -d` (FR-003), `alembic upgrade head` (FR-004).
 
 ## 6. Agents, skills et règles
 

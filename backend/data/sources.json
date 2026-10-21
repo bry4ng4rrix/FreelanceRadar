@@ -1,0 +1,162 @@
+[
+  {
+    "name": "Codeur.com - Projets Web, Mobile & OCR",
+    "category": "Freelance Généraliste (Francophone)",
+    "url": "https://www.codeur.com/projets",
+    "target_type": "playwright",
+    "frequency_minutes": 15,
+    "is_active": true,
+    "keywords": ["web", "mobile", "ocr", "python", "flutter", "react", "scraping", "automatisation"],
+    "selectors": {
+      "item": ".project-item",
+      "title": ".project-title",
+      "description": ".project-description",
+      "link": "a.project-title"
+    }
+  },
+  {
+    "name": "Upwork - RSS OCR & Python",
+    "category": "Freelance International",
+    "url": "https://www.upwork.com/ab/jobs/search/rss?q=ocr+python",
+    "target_type": "rss",
+    "frequency_minutes": 10,
+    "is_active": true,
+    "keywords": ["ocr", "tesseract", "document processing", "data extraction"],
+    "selectors": {}
+  },
+  {
+    "name": "Upwork - RSS Flutter & Mobile",
+    "category": "Freelance International",
+    "url": "https://www.upwork.com/ab/jobs/search/rss?q=flutter+mobile",
+    "target_type": "rss",
+    "frequency_minutes": 10,
+    "is_active": true,
+    "keywords": ["flutter", "dart", "mobile app", "react native"],
+    "selectors": {}
+  },
+  {
+    "name": "Free-Work - Missions IT & Tech",
+    "category": "Job Board Spécialisé IT",
+    "url": "https://www.free-work.com/fr/tech-it/jobs",
+    "target_type": "playwright",
+    "frequency_minutes": 30,
+    "is_active": true,
+    "keywords": ["ocr", "python", "fullstack", "fastapi", "react", "node"],
+    "selectors": {
+      "item": ".job-card",
+      "title": ".job-title",
+      "description": ".job-summary",
+      "link": "a.job-link"
+    }
+  },
+  {
+    "name": "Malt - Missions Développeur",
+    "category": "Plateforme Freelance (Europe)",
+    "url": "https://www.malt.fr/c/freelance/developpeur",
+    "target_type": "playwright",
+    "frequency_minutes": 60,
+    "is_active": true,
+    "keywords": ["web", "mobile", "python", "ocr", "api"],
+    "selectors": {
+      "item": ".freelance-card",
+      "title": ".freelance-title",
+      "description": ".freelance-description",
+      "link": "a.freelance-link"
+    }
+  },
+  {
+    "name": "Freelancer.com - Scraping & OCR Jobs",
+    "category": "Freelance International",
+    "url": "https://www.freelancer.com/jobs/python/1/",
+    "target_type": "playwright",
+    "frequency_minutes": 20,
+    "is_active": true,
+    "keywords": ["scraping", "ocr", "python", "automation", "data mining"],
+    "selectors": {
+      "item": ".JobSearchCard-item",
+      "title": ".JobSearchCard-primary-heading-link",
+      "description": ".JobSearchCard-primary-description",
+      "link": ".JobSearchCard-primary-heading-link"
+    }
+  },
+  {
+    "name": "Contra - Freelance 0% Commission",
+    "category": "Plateforme Indépendante",
+    "url": "https://contra.com/opportunity-feed",
+    "target_type": "playwright",
+    "frequency_minutes": 30,
+    "is_active": true,
+    "keywords": ["flutter", "mobile", "web development", "fullstack", "python"],
+    "selectors": {
+      "item": "[data-testid='opportunity-card']",
+      "title": "[data-testid='opportunity-title']",
+      "description": "[data-testid='opportunity-description']",
+      "link": "a"
+    }
+  },
+  {
+    "name": "goLance - Tech & Software Jobs",
+    "category": "Freelance International (0% Fee)",
+    "url": "https://golance.com/jobs?q=python",
+    "target_type": "playwright",
+    "frequency_minutes": 30,
+    "is_active": true,
+    "keywords": ["python", "web", "mobile", "api", "automation"],
+    "selectors": {
+      "item": ".job-item",
+      "title": ".job-title",
+      "description": ".job-description",
+      "link": "a.job-title-link"
+    }
+  },
+  {
+    "name": "We Work Remotely - Full Stack & Mobile (RSS)",
+    "category": "Remote International",
+    "url": "https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss",
+    "target_type": "rss",
+    "frequency_minutes": 30,
+    "is_active": true,
+    "keywords": ["fullstack", "mobile", "python", "react", "flutter"],
+    "selectors": {}
+  },
+  {
+    "name": "Guru.com - Web & Software Jobs",
+    "category": "Freelance International",
+    "url": "https://www.guru.com/d/jobs/c/programming-development/",
+    "target_type": "playwright",
+    "frequency_minutes": 45,
+    "is_active": true,
+    "keywords": ["ocr", "python", "flutter", "web development"],
+    "selectors": {
+      "item": ".jobRecord",
+      "title": ".jobRecord__title",
+      "description": ".jobRecord__desc",
+      "link": ".jobRecord__title a"
+    }
+  },
+  {
+    "name": "Remotive - Software Development (RSS)",
+    "category": "Remote Tech Jobs",
+    "url": "https://remotive.com/remote-jobs/feed",
+    "target_type": "rss",
+    "frequency_minutes": 30,
+    "is_active": true,
+    "keywords": ["python", "flutter", "react", "fullstack", "ocr", "scraping"],
+    "selectors": {}
+  },
+  {
+    "name": "DevJobScanner - Web Scraping Jobs",
+    "category": "Spécialisé Scraping & Backend",
+    "url": "https://www.devjobsscanner.com/web-scraping-jobs/",
+    "target_type": "playwright",
+    "frequency_minutes": 60,
+    "is_active": true,
+    "keywords": ["scraping", "python", "automation", "crawling"],
+    "selectors": {
+      "item": ".job-card",
+      "title": ".job-card-title",
+      "description": ".job-card-description",
+      "link": "a"
+    }
+  }
+]
