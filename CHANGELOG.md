@@ -14,6 +14,13 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - Collecte RSS avec client HTTP anti-SSRF, normalisation, déduplication PostgreSQL, Celery + Beat, verrou par source, reprises avec backoff (FR-006, FR-011, FR-012).
 - Offres : recherche, filtres, tri, pagination, statut, notes, archivage (FR-012).
 - `backend/data/sources.json` : les 12 sources fournies par l'utilisateur.
+- Application mobile `mobile/` adaptée au backend FreelanceRadar (ancienne « Garrix Offre ») : connexion JWT sans inscription, accueil, offres (recherche, filtres, favoris, statut, notes, archivage), sources (création, test, collecte, historique), réglages ; identifiant Android `mg.garrix.freelanceradar`, icônes « F » (FR-070a).
+- Profil professionnel et compétences : API `/profile` et `/profile/skills`, écrans mobiles Profil, Modifier le profil, Compétences (FR-020a).
+- Centre de notifications : nouvelles offres et sources en erreur ou bloquées, API `/notifications`, onglet mobile Alertes avec badge (FR-051a).
+- Migration `9e708b8a9030` : tables `profiles`, `skills`, `notifications` (ajout uniquement).
+
+### Supprimé
+- Mobile : écrans sans équivalent backend (candidatures, documents, notifications, profil, administration, temps réel), conservés dans le commit `f55f266`.
 
 ### Corrigé
 - Le gestionnaire d'erreurs standard conserve désormais les en-têtes HTTP (`WWW-Authenticate`).

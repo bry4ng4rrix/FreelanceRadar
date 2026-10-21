@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/notifications/notifications_providers.dart';
 import '../theme/app_colors.dart';
 
 class _Destination {
@@ -13,27 +15,37 @@ class _Destination {
 const _destinations = [
   _Destination('Accueil', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
   _Destination('Offres', Icons.work_outline_rounded, Icons.work_rounded),
+  _Destination('Alertes', Icons.notifications_none_rounded, Icons.notifications_rounded),
   _Destination('Sources', Icons.rss_feed_outlined, Icons.rss_feed_rounded),
-  _Destination('Réglages', Icons.settings_outlined, Icons.settings_rounded),
+  _Destination('Profil', Icons.person_outline_rounded, Icons.person_rounded),
 ];
 
+/// Index de l'onglet « Alertes » (badge des notifications non lues).
+const _alertsIndex = 2;
+
 /// Coquille de navigation : barre du bas (mobile) ou rail latéral (écran large, Linux).
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   static const wideBreakpoint = 840.0;
 
-  void _go(int index) =>
-      navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+  void _go(WidgetRef ref, int index) {
+    // Ouvrir les alertes relit le compteur sans attendre le prochain cycle.
+    if (index == _alertsIndex) ref.read(unreadCountProvider.notifier).refresh();
+    navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(unreadCountProvider);
     final wide = MediaQuery.sizeOf(context).width >= wideBreakpoint;
     Widget icon(int index, {required bool selected}) {
       final destination = _destinations[index];
-      return Icon(selected ? destination.selectedIcon : destination.icon);
+      final widget = Icon(selected ? destination.selectedIcon : destination.icon);
+      if (index != _alertsIndex || unread == 0) return widget;
+      return Badge.count(count: unread, child: widget);
     }
 
     if (wide) {
@@ -43,7 +55,7 @@ class AppShell extends StatelessWidget {
             SafeArea(
               child: NavigationRail(
                 selectedIndex: navigationShell.currentIndex,
-                onDestinationSelected: _go,
+                onDestinationSelected: (index) => _go(ref, index),
                 labelType: NavigationRailLabelType.all,
                 groupAlignment: -0.9,
                 leading: const Padding(
@@ -75,7 +87,7 @@ class AppShell extends StatelessWidget {
         ),
         child: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: _go,
+          onDestinationSelected: (index) => _go(ref, index),
           destinations: [
             for (var i = 0; i < _destinations.length; i++)
               NavigationDestination(

@@ -62,10 +62,12 @@ storeFile=/home/<vous>/.android-keys/<cle>.jks
 | Accueil | Compteurs (offres, nouvelles, pertinentes, favorites, sources actives / en erreur), dernières offres, état des sources | `GET /offers` (totaux par statut), `GET /sources` |
 | Offres | Recherche, filtres (statut, source, période, archivées), tri, favoris, ignorer, archiver ; détail avec notes et lien vers l'annonce | `GET /offers`, `GET/PATCH /offers/{id}`, `POST /offers/{id}/archive` |
 | Sources | Liste filtrable, activation, création / modification, test sans écriture, collecte manuelle, historique | `/sources`, `/sources/{id}`, `/test`, `/run`, `/runs` |
-| Réglages | Compte, état du serveur (PostgreSQL, Redis), changement de serveur, documentation de l'API, déconnexion (révoque toutes les sessions) | `GET /ready`, `POST /auth/logout` |
+| Alertes | Notifications (nouvelles offres, sources en erreur ou bloquées), filtres, tout marquer comme lu ; badge relu toutes les 60 s | `/notifications`, `/unread-count`, `/{id}/read`, `/mark-all-read` |
+| Profil | Résumé et complétude, modification (identité, coordonnées, liens, disponibilité, tarif, langues, recherche), compétences avec niveau | `GET/PATCH /profile`, `/profile/skills` |
+| Réglages (depuis Profil) | Compte, état du serveur (PostgreSQL, Redis), changement de serveur, documentation de l'API, déconnexion (révoque toutes les sessions) | `GET /ready`, `POST /auth/logout` |
 
 Fonctionnalités prévues côté backend mais **pas encore disponibles** (donc absentes de
-l'application) : profil et CV, score de pertinence, IA, candidatures, e-mails, notifications.
+l'application) : expériences et CV, score de pertinence, IA, candidatures, e-mails, push FCM.
 L'ancienne application « Garrix Offre » (commit `f55f266`) contient des écrans réutilisables pour
 ces modules.
 
@@ -79,7 +81,7 @@ lib/
 │   ├── network/                  # ApiClient (Dio) : erreurs en français, renouvellement
 │   │                             #   automatique du token sur 401, pagination {items, total, ...}
 │   ├── auth/                     # session (tokens : Keystore Android / trousseau Linux), utilisateur
-│   ├── router/                   # go_router : 4 onglets + pages de détail
+│   ├── router/                   # go_router : 5 onglets + pages de détail
 │   ├── theme/                    # palette noir pur, typographie Inter, composants Material 3
 │   ├── widgets/                  # design system : cartes, pastilles, listes paginées, formulaires,
 │   │                             #   feuilles de détail / formulaire, blocs JSON
@@ -89,6 +91,8 @@ lib/
     ├── dashboard/                # accueil
     ├── offers/                   # liste, filtres, détail
     ├── sources/                  # liste, détail, formulaire, test, historique des collectes
+    ├── notifications/            # alertes, badge des non lues
+    ├── profile/                  # profil, modification, compétences
     └── settings/                 # compte, serveur, à propos
 ```
 

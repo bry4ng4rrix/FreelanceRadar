@@ -13,6 +13,7 @@ import '../../core/widgets/ui.dart';
 import '../offers/data/offer_models.dart';
 import '../offers/offers_providers.dart';
 import '../offers/widgets/offer_card.dart';
+import '../profile/profile_providers.dart';
 import '../sources/data/source_models.dart';
 import '../sources/sources_providers.dart';
 import 'dashboard_providers.dart';
@@ -83,7 +84,7 @@ class DashboardPage extends ConsumerWidget {
   }
 }
 
-/// `Bonjour` + date du jour + avatar (vers les réglages).
+/// `Bonjour, Jane` + date du jour + avatar (vers le profil).
 class _Greeting extends ConsumerWidget {
   const _Greeting();
 
@@ -91,7 +92,10 @@ class _Greeting extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context).textTheme;
     final email = ref.watch(currentUserProvider.select((user) => user?.email));
+    final fullName = ref.watch(profileProvider.select((p) => p.value?.fullName));
+    final firstName = fullName?.split(RegExp(r'\s+')).first;
     final now = DateTime.now();
+    final hello = now.hour >= 18 ? 'Bonsoir' : 'Bonjour';
     return Row(
       children: [
         Expanded(
@@ -103,20 +107,25 @@ class _Greeting extends ConsumerWidget {
                 style: theme.labelLarge?.copyWith(color: AppColors.textTertiary),
               ),
               const Gap(6),
-              Text(now.hour >= 18 ? 'Bonsoir' : 'Bonjour', style: theme.displaySmall),
+              Text(
+                firstName == null ? hello : '$hello, $firstName',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.displaySmall,
+              ),
             ],
           ),
         ),
         const Gap(12),
         Semantics(
           button: true,
-          label: 'Réglages',
+          label: 'Mon profil',
           child: InkWell(
             customBorder: const CircleBorder(),
-            onTap: () => context.go(Routes.settings),
+            onTap: () => context.go(Routes.profile),
             child: Padding(
               padding: const EdgeInsets.all(2),
-              child: AppAvatar(label: email, size: 44),
+              child: AppAvatar(label: fullName ?? email, size: 44),
             ),
           ),
         ),

@@ -8,7 +8,9 @@ Architecture, décisions, risques, état des sources et commandes. Étapes : `RO
 - Backend fonctionnel : authentification JWT, sources, collecte RSS, offres, Celery + Beat (détail : `TASKS.md`).
 - `main.py` vide à la racine : conservé, sa suppression attend l'accord de l'utilisateur.
 - `.venv.old-py314/` : ancien environnement cassé (Python 3.14 déplacé), renommé et ignoré par Git ; suppression soumise à accord.
-- Outils du poste : Docker 29.9 + Compose 5.6, `uv` (Python 3.12.15), Node, Ollama 0.40.6 (`gemma3:4b`). Absents : Flutter, n8n.
+- Outils du poste : Docker 29.9 + Compose 5.6, `uv` (Python 3.12.15), Node, Ollama 0.40.6 (`gemma3:4b`), Flutter 3.44.8 (`~/.flutter/bin`), Android SDK 36. Absents : n8n, CMake (requis pour `flutter build linux`).
+- Java par défaut : 27, non supporté par Gradle 9.1 du projet Android (« Unsupported class file major version 71 ») ; Java 17 est installé (`JAVA_HOME=/usr/lib/jvm/java-17-openjdk` ou `flutter config --jdk-dir`).
+- Application mobile dans `mobile/` (Flutter, Riverpod, go_router, Dio) : voir `mobile/README.md`.
 - Un conteneur d'un autre projet (`madasource-ci-db-test-1`) occupe `127.0.0.1:5434` : ne pas y toucher.
 
 ## 2. Architecture
@@ -41,6 +43,9 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 | D11 | Import de sources idempotent par nom, jamais d'écrasement ; suppression refusée si la source a un historique (désactiver à la place) | Aucune perte de données |
 | D12 | `httpx2` (remplaçant indiqué par Starlette) pour le client HTTP et les tests | Avertissement de dépréciation de Starlette |
 | D13 | `.env` unique à la racine, partagé par Docker Compose et le backend | Une seule source de configuration |
+| D14 | Un profil par utilisateur, créé vide au premier `GET /profile` (e-mail du compte prérempli) ; niveaux de compétence toujours saisis par l'utilisateur | Pas d'inscription séparée ; ne jamais inventer une compétence |
+| D15 | Notifications persistées pour tous les utilisateurs actifs, uniques par `(user_id, dedup_key)` ; nouvelles offres = 1 par collecte ; erreurs = seulement sur changement d'état ; un échec de notification n'affecte pas la collecte | Pas de spam ni de doublon (`notifications.md` §7) |
+| D16 | Sans FCM, le badge mobile est relu toutes les 60 s au premier plan | En attendant le projet Firebase |
 
 ## 4. Risques et limites connus
 
@@ -48,7 +53,8 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 - **Limitation de connexion** : par couple IP + e-mail (5 échecs / 15 min). Un attaquant multipliant les IP n'est pas freiné globalement.
 - **Jetons de renouvellement** sans rotation stockée : un refresh volé reste valable jusqu'à expiration ou déconnexion (qui révoque tout).
 - **Sources Playwright** : sélecteurs fournis par l'utilisateur, non vérifiés ; aucun connecteur Playwright encore.
-- **Périmètre** : backend seul pour l'instant ; Flutter, n8n, IA, e-mails non commencés.
+- **Périmètre** : backend + application mobile (offres, sources) ; n8n, IA, e-mails non commencés.
+- **Mobile** : HTTP en clair autorisé (`usesCleartextTraffic`) pour le réseau local ; à retirer avec le passage en HTTPS. Les compteurs de l'accueil font 4 appels `GET /offers` : un endpoint de statistiques (FR-023) les remplacera.
 
 ## 5. État réel des sources (vérifié le 2026-10-21)
 

@@ -21,6 +21,7 @@ from app.collectors.normalize import clean_line, fingerprint, html_to_text, norm
 from app.collectors.registry import get_collector, supported_target_types
 from app.db.base import utcnow
 from app.models import CollectionRun, Offer, Source
+from app.services.notification_service import notify_collection_outcome
 
 logger = logging.getLogger(__name__)
 
@@ -82,12 +83,15 @@ def normalize_offers(source_id: int, raw_offers: list[RawOffer]) -> NormalizedOf
     return NormalizedOffers(rows=rows, invalid=invalid)
 
 
-def store_offers(db: Session, rows: list[dict[str, Any]]) -> int:
-    """Insère les offres ; les doublons sont écartés par les contraintes PostgreSQL."""
+def store_offers(db: Session, rows: list[dict[str, Any]]) -> list[int]:
+    """Insère les offres et renvoie les identifiants créés.
+
+    Les doublons sont écartés par les contraintes PostgreSQL.
+    """
     if not rows:
-        return 0
+        return []
     stmt = insert(Offer).values(rows).on_conflict_do_nothing().returning(Offer.id)
-    return len(db.execute(stmt).all())
+    return [row[0] for row in db.execute(stmt).all()]
 
 
 def run_collection(
@@ -101,16 +105,18 @@ def run_collection(
     if source is None:
         raise LookupError(f"Source {source_id} introuvable.")
 
+    previous_health = source.health_status
     run = CollectionRun(source_id=source.id, trigger=trigger, status="running", task_id=task_id)
     db.add(run)
     source.last_attempt_at = utcnow()
     db.commit()
 
     retryable = False
+    new_ids: list[int] = []
     try:
         raw_offers = get_collector(source.target_type).collect(to_source_config(source), client)
         normalized = normalize_offers(source.id, raw_offers)
-        new_count = store_offers(db, normalized.rows)
+        new_ids = store_offers(db, normalized.rows)
     except UnsupportedConnectorError as exc:
         _record_failure(source, run, "unsupported", "unsupported", str(exc))
     except SourceBlockedError as exc:
@@ -125,6 +131,7 @@ def run_collection(
         logger.exception("Erreur inattendue pendant la collecte de la source %s", source_id)
         _record_failure(source, run, "failed", "error", "Erreur interne pendant la collecte.")
     else:
+        new_count = len(new_ids)
         run.status = "success"
         run.items_seen = len(raw_offers)
         run.items_new = new_count
@@ -147,7 +154,20 @@ def run_collection(
         run.items_duplicate,
         run.items_invalid,
     )
+    _notify(db, source, run, previous_health, new_ids)
     return CollectionResult(run=run, retryable=retryable)
+
+
+def _notify(
+    db: Session, source: Source, run: CollectionRun, previous_health: str, new_ids: list[int]
+) -> None:
+    """Notifications de fin de collecte : un échec ici ne change pas le résultat de la collecte."""
+    try:
+        notify_collection_outcome(db, source, run, previous_health, new_ids)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Notification de la collecte %s impossible.", run.id)
 
 
 def _record_failure(

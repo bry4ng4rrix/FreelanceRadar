@@ -16,6 +16,12 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [x] FR-011 — Protection SSRF du client de collecte (IP privées, métadonnées cloud, redirections, ports, taille).
 - [x] FR-012 — Premier parcours RSS de bout en bout : fixture + collecte réelle We Work Remotely et Remotive ; doublons rejetés par PostgreSQL ; offres consultables (recherche, filtres, tri, pagination, statut, notes, archivage).
   - Vérification : 72 tests (48 unitaires, 24 intégration PostgreSQL) ; ruff, format, mypy strict ; worker + Beat réels ; `/ready` = 200 ; aucun secret dans les logs.
+- [x] FR-070a — Application Flutter `mobile/` adaptée au backend et renommée FreelanceRadar (thème et composants de Garrix Offre conservés) : connexion JWT, accueil, offres, sources, réglages ; modules sans backend retirés (récupérables au commit `f55f266`).
+  - Vérification : `flutter analyze` sans remarque ; 30 tests (modèles, client réseau, fumée des écrans téléphone + grand écran) ; contrat comparé à l'OpenAPI réel (tous les champs lus existent).
+  - Non vérifié par moi : build APK/Linux et exécution sur appareil (réalisés par l'utilisateur).
+- [x] FR-020a — Profil et compétences : tables `profiles` et `skills` (migration additive `9e708b8a9030`), `GET/PATCH /profile`, CRUD `/profile/skills` (doublon refusé sans tenir compte de la casse) ; écrans mobiles Profil, Modifier le profil, Compétences.
+- [x] FR-051a — Centre de notifications : table `notifications` (anti-doublon `dedup_key`), notifications « nouvelles offres » (une par collecte) et « source en erreur / bloquée » (sur changement d'état), `GET /notifications`, `unread-count`, `read`, `mark-all-read` ; onglet mobile Alertes avec badge (relu toutes les 60 s, au retour au premier plan et à l'ouverture).
+  - Vérification : backend 99 tests (27 nouveaux : validation, isolation entre utilisateurs, anti-doublon, échec de notification sans effet sur la collecte), ruff, mypy strict, migration aller-retour ; mobile `flutter analyze` sans remarque, 43 tests ; contrat Dart comparé à l'OpenAPI.
 
 ## À faire — backend (ordre recommandé)
 
@@ -23,7 +29,7 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
   - Critères : `docker compose up -d` démarre tout ; `/ready` = 200 depuis l'hôte ; une collecte planifiée s'exécute dans le conteneur worker.
 - [ ] FR-013 — Ajuster la configuration des sources selon `PLANNING.md` §5 (Remotive ≥ 360 min, Upwork désactivées) — **décision utilisateur requise**.
 - [ ] FR-014 — Alerte de panne répétée : source passée en `error` après N échecs consécutifs visible dans l'API (base des notifications futures).
-- [ ] FR-020 — Profil développeur : CRUD profil, compétences + niveaux, expériences, langues, préférences, mots-clés inclus/exclus.
+- [ ] FR-020b — Profil : expériences, diplômes et certifications.
 - [ ] FR-021 — Upload privé du CV (PDF/DOCX, taille et type contrôlés, jamais journalisé).
 - [ ] FR-022 — Score de pertinence explicable (raisons +/−, seuil configurable) et détection des compétences.
 - [ ] FR-023 — Tableau de bord / statistiques.
@@ -31,13 +37,13 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [ ] FR-040 — Candidatures : brouillons versionnés, approbation, anti-doublon.
 - [ ] FR-041 — SMTP (sans envoi réel en test), statuts distincts, idempotence.
 - [ ] FR-050 — IMAP et association prudente des réponses.
-- [ ] FR-051 — Centre de notifications et FCM.
+- [ ] FR-051b — Notifications push FCM (projet Firebase requis) et préférences par type.
 - [ ] FR-013b — Connecteurs HTML/Playwright, source par source, après vérification des CGU.
 
 ## Hors focus actuel
 
 - [ ] FR-060 — Workflows n8n.
-- [ ] FR-070 — Application Flutter.
+- [ ] FR-070b — Flutter : écrans candidatures et messagerie (au fil des modules backend FR-040 à FR-050).
 - [ ] FR-080 — Reverse proxy HTTPS, sauvegardes, guide VPS.
 
 ## Bloqué

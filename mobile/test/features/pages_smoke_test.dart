@@ -8,10 +8,19 @@ import 'package:freelanceradar/core/network/paginated.dart';
 import 'package:freelanceradar/core/theme/app_theme.dart';
 import 'package:freelanceradar/core/widgets/feedback.dart';
 import 'package:freelanceradar/features/dashboard/dashboard_page.dart';
+import 'package:freelanceradar/features/notifications/data/notification_models.dart';
+import 'package:freelanceradar/features/notifications/data/notifications_repository.dart';
+import 'package:freelanceradar/features/notifications/notifications_page.dart';
+import 'package:freelanceradar/features/notifications/notifications_providers.dart';
 import 'package:freelanceradar/features/offers/data/offer_models.dart';
 import 'package:freelanceradar/features/offers/data/offers_repository.dart';
 import 'package:freelanceradar/features/offers/offer_detail_page.dart';
 import 'package:freelanceradar/features/offers/offers_page.dart';
+import 'package:freelanceradar/features/profile/data/profile_models.dart';
+import 'package:freelanceradar/features/profile/data/profile_repository.dart';
+import 'package:freelanceradar/features/profile/edit_profile_page.dart';
+import 'package:freelanceradar/features/profile/profile_page.dart';
+import 'package:freelanceradar/features/profile/skills_page.dart';
 import 'package:freelanceradar/features/settings/settings_page.dart';
 import 'package:freelanceradar/features/sources/data/source_models.dart';
 import 'package:freelanceradar/features/sources/data/sources_repository.dart';
@@ -115,6 +124,75 @@ class _FakeSources implements SourcesRepository {
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
+class _FakeProfile implements ProfileRepository {
+  Profile profile = Profile.fromJson(profileJson);
+  final skills = [
+    Skill.fromJson(skillJson),
+    Skill.fromJson({...skillJson, 'id': 2, 'name': 'Flutter', 'category': null}),
+  ];
+  Map<String, dynamic>? lastUpdate;
+
+  @override
+  Future<Profile> getProfile() async => profile;
+
+  @override
+  Future<Profile> updateProfile(Map<String, dynamic> changes) async {
+    lastUpdate = changes;
+    return profile = Profile.fromJson({...profileJson, ...changes});
+  }
+
+  @override
+  Future<List<Skill>> listSkills() async => skills;
+
+  @override
+  Future<Skill> createSkill(SkillInput input) async => skills.first;
+
+  @override
+  Future<Skill> updateSkill(int id, SkillInput input) async => skills.first;
+
+  @override
+  Future<void> deleteSkill(int id) async {}
+}
+
+class _FakeNotifications implements NotificationsRepository {
+  @override
+  Future<Paginated<AppNotification>> list({
+    int page = 1,
+    int pageSize = 20,
+    bool unreadOnly = false,
+    NotificationType? type,
+  }) async {
+    final items = [
+      AppNotification.fromJson(notificationJson),
+      AppNotification.fromJson({
+        ...notificationJson,
+        'id': 2,
+        'type': 'source_error',
+        'title': 'Source en erreur',
+        'body': 'Upwork - RSS OCR & Python : Réponse HTTP 404.',
+        'read_at': '2026-10-21T09:00:00Z',
+      }),
+    ];
+    return Paginated(items: items, total: items.length, page: 1, pageSize: pageSize);
+  }
+
+  @override
+  Future<int> unreadCount() async => 1;
+
+  @override
+  Future<AppNotification> markRead(int id) async => AppNotification.fromJson(notificationJson);
+
+  @override
+  Future<int> markAllRead() async => 1;
+}
+
+/// Compteur fixe : pas de minuteur de rafraîchissement pendant les tests.
+class _FixedUnread extends UnreadCountNotifier {
+  @override
+  int build() => 1;
+}
+
+late _FakeProfile _profileRepo;
 late SharedPreferences _prefs;
 
 Future<void> _pump(WidgetTester tester, Widget page, {Size size = const Size(390, 844)}) async {
@@ -130,6 +208,9 @@ Future<void> _pump(WidgetTester tester, Widget page, {Size size = const Size(390
         ),
         offersRepositoryProvider.overrideWithValue(_FakeOffers()),
         sourcesRepositoryProvider.overrideWithValue(_FakeSources()),
+        profileRepositoryProvider.overrideWithValue(_profileRepo),
+        notificationsRepositoryProvider.overrideWithValue(_FakeNotifications()),
+        unreadCountProvider.overrideWith(_FixedUnread.new),
         serverHealthProvider.overrideWith(
           (ref) async => const ServerHealth(ready: true, database: true, redis: false),
         ),
@@ -148,6 +229,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     _prefs = await SharedPreferences.getInstance();
   });
+
+  setUp(() => _profileRepo = _FakeProfile());
 
   for (final (label, size) in [('téléphone', Size(390, 844)), ('grand écran', Size(1280, 800))]) {
     testWidgets('DashboardPage ($label)', (tester) async {
@@ -204,5 +287,52 @@ void main() {
       expect(find.text('PostgreSQL'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('NotificationsPage ($label)', (tester) async {
+      await _pump(tester, const NotificationsPage(), size: size);
+      expect(find.text('2 notifications'), findsOneWidget);
+      expect(find.text('2 nouvelles offres — We Work Remotely'), findsOneWidget);
+      expect(find.byTooltip('Tout marquer comme lu'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ProfilePage ($label)', (tester) async {
+      await _pump(tester, const ProfilePage(), size: size);
+      expect(find.text('Jane Dev'), findsOneWidget);
+      expect(find.text('2 compétences'), findsOneWidget);
+      expect(find.text('450 EUR / jour'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('SkillsPage et feuille d\'ajout ($label)', (tester) async {
+      await _pump(tester, const SkillsPage(), size: size);
+      expect(find.text('FastAPI'), findsOneWidget);
+      expect(find.text('BACKEND'), findsOneWidget);
+      expect(find.text('AUTRES'), findsOneWidget);
+      await tester.tap(find.text('Ajouter'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Ajouter une compétence'), findsOneWidget);
+      // Les compétences déjà présentes ne sont pas suggérées.
+      expect(find.widgetWithText(ActionChip, 'Python'), findsOneWidget);
+      expect(find.widgetWithText(ActionChip, 'Flutter'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   }
+
+  testWidgets('EditProfilePage : enregistre le profil complet', (tester) async {
+    await _pump(tester, const EditProfilePage());
+    await tester.enterText(find.widgetWithText(TextFormField, 'Jane Dev'), 'Jane Rakoto');
+    await tester.tap(find.text('Enregistrer'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    final sent = _profileRepo.lastUpdate!;
+    expect(sent['full_name'], 'Jane Rakoto');
+    expect(sent['preferred_languages'], ['fr', 'en']);
+    expect(sent['default_rate'], 450);
+    expect(sent['contract_types'], ['freelance']);
+    expect(tester.takeException(), isNull);
+  });
 }

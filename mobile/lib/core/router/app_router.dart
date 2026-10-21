@@ -5,8 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/auth/splash_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
+import '../../features/notifications/notifications_page.dart';
 import '../../features/offers/offer_detail_page.dart';
 import '../../features/offers/offers_page.dart';
+import '../../features/profile/edit_profile_page.dart';
+import '../../features/profile/profile_page.dart';
+import '../../features/profile/skills_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/sources/source_detail_page.dart';
 import '../../features/sources/sources_page.dart';
@@ -69,6 +73,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
+              GoRoute(path: Routes.notifications, builder: (_, _) => const NotificationsPage()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
               GoRoute(
                 path: Routes.sources,
                 builder: (_, _) => const SourcesPage(),
@@ -77,7 +86,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: Routes.settings, builder: (_, _) => const SettingsPage())],
+            routes: [
+              GoRoute(
+                path: Routes.profile,
+                builder: (_, _) => const ProfilePage(),
+                routes: [
+                  page('edit', (_) => const EditProfilePage()),
+                  page('skills', (_) => const SkillsPage()),
+                  page('settings', (_) => const SettingsPage()),
+                ],
+              ),
+            ],
           ),
         ],
       ),

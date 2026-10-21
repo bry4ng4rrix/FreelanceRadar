@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freelanceradar/features/notifications/data/notification_models.dart';
 import 'package:freelanceradar/features/offers/data/offer_models.dart';
+import 'package:freelanceradar/features/profile/data/profile_models.dart';
 import 'package:freelanceradar/features/sources/data/source_models.dart';
 
 /// Réponses calquées sur les schémas du backend (`OfferRead`, `SourceRead`, ...).
@@ -48,7 +50,120 @@ const sourceJson = <String, dynamic>{
   'updated_at': '2026-10-21T07:40:29Z',
 };
 
+const profileJson = <String, dynamic>{
+  'id': 1,
+  'full_name': 'Jane Dev',
+  'professional_title': 'Développeuse Python / Flutter',
+  'summary': null,
+  'primary_email': 'dev@example.com',
+  'secondary_emails': <String>[],
+  'phone': null,
+  'location': 'Antananarivo',
+  'portfolio_url': null,
+  'github_url': 'https://github.com/janedev',
+  'linkedin_url': null,
+  'preferred_languages': ['fr', 'en'],
+  'availability': 'partially_available',
+  'available_from': '2026-11-01',
+  'default_rate': '450.00',
+  'rate_unit': 'day',
+  'minimum_budget': null,
+  'currency': 'EUR',
+  'contract_types': ['freelance', 'unknown'],
+  'accepted_locations': ['Remote'],
+  'accepted_timezones': <String>[],
+  'included_keywords': ['fastapi'],
+  'excluded_keywords': <String>[],
+  'created_at': '2026-10-21T08:00:00Z',
+  'updated_at': '2026-10-21T08:00:00Z',
+};
+
+const skillJson = <String, dynamic>{
+  'id': 1,
+  'name': 'FastAPI',
+  'category': 'Backend',
+  'proficiency_level': 'advanced',
+  'years_experience': '3.5',
+  'aliases': ['fast-api'],
+  'created_at': '2026-10-21T08:00:00Z',
+  'updated_at': '2026-10-21T08:00:00Z',
+};
+
+const notificationJson = <String, dynamic>{
+  'id': 1,
+  'type': 'new_offers',
+  'title': 'Nouvelles offres',
+  'body': '2 nouvelles offres — We Work Remotely',
+  'offer_id': null,
+  'source_id': 3,
+  'collection_run_id': 4,
+  'created_at': '2026-10-21T08:30:00Z',
+  'read_at': null,
+};
+
 void main() {
+  group('Profile', () {
+    test('lit le profil du serveur (montant en chaîne, date seule, type inconnu ignoré)', () {
+      final profile = Profile.fromJson(profileJson);
+      expect(profile.availability, Availability.partiallyAvailable);
+      expect(profile.defaultRate, 450);
+      expect(profile.availableFrom, DateTime(2026, 11));
+      expect(profile.contractTypes, [ContractType.freelance]);
+      expect(profile.missingFields(skillCount: 2), ['présentation']);
+    });
+
+    test('corps de PATCH /profile : textes vides pour effacer, date au format API', () {
+      final json = Profile.fromJson(profileJson).toUpdateJson();
+      expect(json['summary'], '');
+      expect(json['available_from'], '2026-11-01');
+      expect(json['contract_types'], ['freelance']);
+      expect(json['default_rate'], 450);
+      expect(json.containsKey('id'), isFalse);
+    });
+
+    test('complétude', () {
+      const empty = Profile(id: 1);
+      expect(empty.completion(skillCount: 0), 0);
+      expect(Profile.fromJson(profileJson).completion(skillCount: 2), 88);
+    });
+  });
+
+  group('Skill', () {
+    test('lecture et corps envoyé (une décimale au plus)', () {
+      final skill = Skill.fromJson(skillJson);
+      expect(skill.level, SkillLevel.advanced);
+      expect(skill.yearsExperience, 3.5);
+      const input = SkillInput(
+        name: ' Go ',
+        level: SkillLevel.expert,
+        category: ' ',
+        yearsExperience: 1.26,
+      );
+      expect(input.toJson(), {
+        'name': 'Go',
+        'category': null,
+        'proficiency_level': 'expert',
+        'years_experience': 1.3,
+        'aliases': <String>[],
+      });
+    });
+
+    test('yearsLabel', () {
+      expect(yearsLabel(1), '1 an');
+      expect(yearsLabel(3), '3 ans');
+      expect(yearsLabel(2.5), '2,5 ans');
+      expect(yearsLabel(0.5), '6 mois');
+    });
+  });
+
+  test('AppNotification', () {
+    final notification = AppNotification.fromJson(notificationJson);
+    expect(notification.type, NotificationType.newOffers);
+    expect(notification.isRead, isFalse);
+    expect(notification.sourceId, 3);
+    expect(NotificationType.fromApi('bogus'), isNull);
+  });
+
   group('Offer', () {
     test('lit une offre du serveur (montants en chaîne, champs vides)', () {
       final offer = Offer.fromJson(offerJson);
