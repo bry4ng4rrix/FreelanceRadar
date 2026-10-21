@@ -68,6 +68,8 @@ Ne jamais affirmer qu'une commande ou un test a réussi sans avoir observé son 
 - `TASKS.md` contient les tâches actionnables et leurs critères d'acceptation.
 - `CHANGELOG.md` résume les changements livrés.
 - `docs/` contient les procédures et décisions détaillées.
+- `prompt.md` et `notifications.md` sont les spécifications fonctionnelles de référence. En cas de conflit avec ce fichier sur la méthode de travail, `CLAUDE.md` prévaut.
+- Les commandes vérifiées (démarrage, tests, lint, migrations) sont listées dans `PLANNING.md` §5.
 
 Évite de dupliquer la même documentation dans plusieurs fichiers.
 
