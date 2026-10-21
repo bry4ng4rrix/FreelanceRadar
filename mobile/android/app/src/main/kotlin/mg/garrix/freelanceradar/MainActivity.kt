@@ -1,4 +1,4 @@
-package mg.garrix.garrix_offre
+package mg.garrix.freelanceradar
 
 import io.flutter.embedding.android.FlutterActivity
 

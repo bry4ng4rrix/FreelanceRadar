@@ -22,7 +22,7 @@ Future<void> main() async {
       overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
       // Pas de nouvelle tentative automatique : les erreurs s'affichent avec « Réessayer ».
       retry: (retryCount, error) => null,
-      child: const GarrixApp(),
+      child: const FreelanceRadarApp(),
     ),
   );
 }

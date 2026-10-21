@@ -43,9 +43,7 @@ class ApiException implements Exception {
       for (final item in raw) {
         if (item is! Map) continue;
         final loc = item['loc'];
-        final field = loc is List && loc.isNotEmpty && loc.last is String
-            ? loc.last as String
-            : '';
+        final field = loc is List && loc.isNotEmpty && loc.last is String ? loc.last as String : '';
         final label = _fieldLabels[field] ?? field;
         final text = item['msg']?.toString() ?? 'Valeur invalide';
         result[label] = text.replaceFirst('Value error, ', '');

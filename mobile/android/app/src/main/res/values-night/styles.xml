@@ -6,6 +6,6 @@
     </style>
     <!-- Fond de la fenêtre derrière l'interface Flutter. -->
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">@color/garrix_black</item>
+        <item name="android:windowBackground">@color/brand_black</item>
     </style>
 </resources>

@@ -30,6 +30,5 @@ class Paginated<T> {
     );
   }
 
-  static Paginated<T> empty<T>() =>
-      Paginated<T>(items: const [], total: 0, page: 1, pageSize: 20);
+  static Paginated<T> empty<T>() => Paginated<T>(items: const [], total: 0, page: 1, pageSize: 20);
 }

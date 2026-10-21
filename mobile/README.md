@@ -1,62 +1,73 @@
-# Garrix Offre — application Flutter
+# FreelanceRadar — application Flutter
 
-Application **Android** et **Linux** de Garrix Offre : offres d'emploi et missions freelance
-triées par score de matching, préparation et suivi des candidatures, CV, alertes en temps réel.
-Interface **noire (#000000), minimaliste, pensée d'abord pour le téléphone** ; sur un grand écran
-(Linux), la barre de navigation du bas devient un rail latéral et le contenu reste centré.
+Application **Android** et **Linux** de FreelanceRadar : consulter et trier les offres collectées
+par le backend, gérer les sources et suivre leurs collectes. Interface **noire (#000000),
+minimaliste, pensée d'abord pour le téléphone** ; sur un grand écran (Linux), la barre de
+navigation du bas devient un rail latéral et le contenu reste centré.
+
+L'application ne contient aucune logique métier ni secret : tout passe par l'API du backend
+(`../backend`, préfixe `/api/v1`).
 
 ---
 
 ## 1. Démarrage rapide
 
-Prérequis : Flutter 3.44 (stable), et selon la cible :
+Prérequis : Flutter 3.44 (stable), le backend lancé (voir `../README.md`) et un compte créé sur
+le serveur (`uv run python -m app.cli create-user --email vous@example.com`). Selon la cible :
 - **Linux** : `clang cmake ninja pkg-config gtk3 libsecret` (Arch : `sudo pacman -S clang cmake ninja pkgconf gtk3 libsecret`) ;
 - **Android** : Android SDK + JDK 17 ou plus (fourni par Android Studio).
 
 ```bash
 cd mobile
 flutter pub get
-flutter run -d linux          # application de bureau
+flutter run -d linux               # application de bureau
 flutter run -d <id-du-telephone>   # voir `flutter devices` (débogage USB activé)
 ```
 
-Au premier lancement, l'écran de connexion utilise le serveur de production
-`http://185.215.167.79:8000`. Pour un backend local : touchez **Serveur** en bas de l'écran de
-connexion, saisissez `http://localhost:8000` (Linux) ou `http://<IP-du-PC>:8000` (téléphone sur le
-même Wi-Fi), puis **Tester** et **Enregistrer**.
-
-Compte de démonstration du backend local (`make seed-dev` dans `backend/`) :
-`demo@example.com` / `DemoPassw0rd!`.
+Serveur par défaut : `http://localhost:8000` (backend local, Linux). Sur un téléphone : touchez
+**Serveur** en bas de l'écran de connexion, saisissez `http://<IP-du-PC>:8000` (même Wi-Fi ; lancez
+alors l'API avec `--host 0.0.0.0`), puis **Tester** et **Enregistrer**.
 
 ## 2. Construire les applications
 
 ```bash
 flutter build apk --release        # build/app/outputs/flutter-apk/app-release.apk
-flutter build linux --release      # build/linux/x64/release/bundle/ (lancer ./garrix_offre)
+flutter build linux --release      # build/linux/x64/release/bundle/ (lancer ./freelanceradar)
 ```
 
-Installer l'APK sur un téléphone branché : `adb install -r build/app/outputs/flutter-apk/app-release.apk`
-(ou copiez le fichier sur le téléphone et ouvrez-le).
+Installer l'APK sur un téléphone branché : `adb install -r build/app/outputs/flutter-apk/app-release.apk`.
+
+Identifiant Android : `mg.garrix.freelanceradar`. Il diffère de l'ancienne application
+« Garrix Offre » (`mg.garrix.garrix_offre`) : les deux peuvent coexister ; désinstallez l'ancienne
+si elle n'est plus utile.
 
 ### Signature Android
 
-`android/key.properties` (jamais commité) pointe vers la clé de release
-`~/.android-keys/garrix-offre-release.jks`. **Sauvegardez ce fichier** : sans lui, une nouvelle
-version ne pourra pas s'installer par-dessus l'ancienne (il faudrait désinstaller l'application).
-Sans `key.properties`, la release est signée avec la clé de debug.
+`android/key.properties` (jamais commité) pointe vers la clé de release. **Sauvegardez la clé** :
+sans elle, une nouvelle version ne pourra pas s'installer par-dessus l'ancienne. Sans
+`key.properties`, la release est signée avec la clé de debug.
 
 ```properties
 storePassword=...
 keyPassword=...
-keyAlias=garrix
-storeFile=/home/<vous>/.android-keys/garrix-offre-release.jks
+keyAlias=...
+storeFile=/home/<vous>/.android-keys/<cle>.jks
 ```
 
-## 3. Pas de CI pour l'application
+## 3. Écrans et API utilisée
 
-Les builds Android et Linux se font **manuellement en local** (section 2) : aucun workflow GitHub
-Actions ni déploiement sur le VPS pour `mobile/`. Avant chaque build, lancez `flutter analyze` et
-`flutter test` (section 5).
+| Onglet | Contenu | Endpoints |
+|---|---|---|
+| Connexion | Email + mot de passe, choix du serveur (pas d'inscription : comptes créés sur le serveur) | `POST /auth/login`, `/auth/refresh`, `GET /auth/me`, `GET /ready` |
+| Accueil | Compteurs (offres, nouvelles, pertinentes, favorites, sources actives / en erreur), dernières offres, état des sources | `GET /offers` (totaux par statut), `GET /sources` |
+| Offres | Recherche, filtres (statut, source, période, archivées), tri, favoris, ignorer, archiver ; détail avec notes et lien vers l'annonce | `GET /offers`, `GET/PATCH /offers/{id}`, `POST /offers/{id}/archive` |
+| Sources | Liste filtrable, activation, création / modification, test sans écriture, collecte manuelle, historique | `/sources`, `/sources/{id}`, `/test`, `/run`, `/runs` |
+| Réglages | Compte, état du serveur (PostgreSQL, Redis), changement de serveur, documentation de l'API, déconnexion (révoque toutes les sessions) | `GET /ready`, `POST /auth/logout` |
+
+Fonctionnalités prévues côté backend mais **pas encore disponibles** (donc absentes de
+l'application) : profil et CV, score de pertinence, IA, candidatures, e-mails, notifications.
+L'ancienne application « Garrix Offre » (commit `f55f266`) contient des écrans réutilisables pour
+ces modules.
 
 ## 4. Architecture
 
@@ -64,61 +75,43 @@ Actions ni déploiement sur le VPS pour `mobile/`. Avant chaque build, lancez `f
 lib/
 ├── main.dart, app.dart           # démarrage, thème, localisation fr_FR, routeur
 ├── core/
-│   ├── config/                   # URL du serveur (modifiable, persistée)
-│   ├── network/                  # ApiClient (Dio) : enveloppe {success, data}, erreurs en français,
-│   │                             #   renouvellement automatique du token sur 401, pagination
+│   ├── config/                   # URL du serveur (modifiable, persistée), nom et version
+│   ├── network/                  # ApiClient (Dio) : erreurs en français, renouvellement
+│   │                             #   automatique du token sur 401, pagination {items, total, ...}
 │   ├── auth/                     # session (tokens : Keystore Android / trousseau Linux), utilisateur
-│   ├── realtime/                 # WebSocket /api/v1/ws (reconnexion, token expiré -> refresh)
-│   ├── router/                   # go_router : 5 onglets + pages plein écran, garde admin
-│   ├── models/                   # énumérations de l'API (libellés FR, couleurs), référentiels
+│   ├── router/                   # go_router : 4 onglets + pages de détail
 │   ├── theme/                    # palette noir pur, typographie Inter, composants Material 3
-│   ├── widgets/                  # design system : cartes, pastilles, score, listes paginées, formulaires
-│   └── utils/                    # formatage (dates, salaires, tailles), lecture JSON
+│   ├── widgets/                  # design system : cartes, pastilles, listes paginées, formulaires,
+│   │                             #   feuilles de détail / formulaire, blocs JSON
+│   └── utils/                    # formatage (dates, montants), lecture JSON, liens externes
 └── features/
-    ├── auth/                     # connexion, inscription, choix du serveur
-    ├── dashboard/                # accueil : chiffres du jour, meilleures offres, candidatures
-    ├── jobs/                     # recherche, filtres, détail, matching, analyse IA, ajout manuel
-    ├── applications/             # candidatures : préparation, génération, validation, suivi
-    ├── documents/                # CV et documents : envoi, téléchargement, CV principal
-    ├── notifications/            # alertes temps réel, préférences Telegram / email
-    ├── profile/                  # profil, photo, compétences, expériences, préférences, matching
-    ├── settings/                 # compte, serveur, mot de passe, IA, à propos
-    └── admin/                    # utilisateurs, sources, collectes, système, audit, référentiels
+    ├── auth/                     # connexion, choix du serveur
+    ├── dashboard/                # accueil
+    ├── offers/                   # liste, filtres, détail
+    ├── sources/                  # liste, détail, formulaire, test, historique des collectes
+    └── settings/                 # compte, serveur, à propos
 ```
 
-Chaque fonctionnalité suit la même organisation : `data/` (modèles `fromJson`/`toJson` et
-repository qui appelle l'API), pages `*_page.dart`, `widgets/` réutilisables. L'état est géré avec
-**Riverpod 3** (`FutureProvider`, `Notifier`), la navigation avec **go_router**.
-
-### Règles importantes reprises du backend
-
-- Une candidature n'est **jamais envoyée sans confirmation explicite** : le bouton « Valider
-  l'envoi » ouvre un récapitulatif avec une case à cocher, puis appelle `POST /applications/{id}/submit`
-  avec `confirm: true`.
-- Les transitions de statut proposées sont celles autorisées par le backend
-  (`ApplicationStatus.allowedTransitions`, identique à `backend/app/modules/applications/rules.py`).
-- L'espace **Administration** n'apparaît que pour un compte administrateur (et le routeur bloque
-  l'accès aux autres).
+Chaque fonctionnalité suit la même organisation : `data/` (modèles `fromJson` et repository qui
+appelle l'API), pages `*_page.dart`, `widgets/`. L'état est géré avec **Riverpod 3**, la
+navigation avec **go_router**.
 
 ### Design
 
 - Fond `#000000`, surfaces `#0A0A0A` → `#1F1F1F`, bordures fines, texte blanc / gris, accent blanc ;
-  couleurs sémantiques (vert, ambre, rouge) réservées aux statuts et aux scores.
+  couleurs sémantiques (vert, ambre, rouge) réservées aux statuts.
 - Police **Inter** (incluse, licence OFL), icônes Material arrondies.
-- Composants communs dans `lib/core/widgets/` : `AppCard`, `Pill`, `ScoreRing`, `StatTile`,
-  `PagedListView`, `AppTextField`, `EmptyState`, `showToast`, `confirmDialog`...
 
 ## 5. Qualité
 
 ```bash
 flutter analyze     # aucune remarque attendue
-flutter test        # tests unitaires (core + modèles de chaque fonctionnalité)
+flutter test        # modèles, client réseau, tests de fumée des écrans (téléphone et grand écran)
 ```
 
 ## 6. Sécurité
 
 - Tokens stockés dans le Keystore Android / le trousseau Linux (libsecret). Si aucun trousseau
   n'est disponible sous Linux, repli sur les préférences locales de l'utilisateur.
-- `android:usesCleartextTraffic="true"` : le serveur est en HTTP tant qu'il n'a pas de nom de
-  domaine avec HTTPS. **À retirer dès que l'API passe en HTTPS** (mots de passe et tokens circulent
-  sinon en clair sur le réseau).
+- `android:usesCleartextTraffic="true"` autorise un backend HTTP sur le réseau local.
+  **À retirer dès que l'API est servie en HTTPS** (mots de passe et tokens circulent sinon en clair).

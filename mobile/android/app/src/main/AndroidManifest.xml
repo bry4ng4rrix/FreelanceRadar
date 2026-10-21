@@ -1,9 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- usesCleartextTraffic : le serveur est en HTTP tant qu'il n'a pas de domaine + HTTPS.
+    <!-- usesCleartextTraffic : autorise un backend HTTP sur le réseau local (développement).
          À retirer dès que l'API est servie en HTTPS. -->
     <application
-        android:label="Garrix Offre"
+        android:label="FreelanceRadar"
         android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

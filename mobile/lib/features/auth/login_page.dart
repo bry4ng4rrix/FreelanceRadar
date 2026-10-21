@@ -116,11 +116,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                       if (_error != null) ...[const Gap(16), _ErrorBanner(message: _error!)],
                       const Gap(28),
-                      PrimaryButton(
-                        label: 'Se connecter',
-                        loading: _loading,
-                        onPressed: _submit,
-                      ),
+                      PrimaryButton(label: 'Se connecter', loading: _loading, onPressed: _submit),
                       const Gap(16),
                       Text(
                         'Pas encore de compte ? Il se crée sur le serveur, '
