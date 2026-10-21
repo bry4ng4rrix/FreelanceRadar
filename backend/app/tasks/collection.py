@@ -25,6 +25,9 @@ def _redis() -> Redis:
 
 @celery_app.task(name="collection.schedule_due_sources")  # type: ignore[untyped-decorator]
 def schedule_due_sources() -> list[int]:
+    # Collecte déclenchée par n8n : Beat ne planifie plus rien (pas de double planificateur).
+    if get_settings().collection_scheduler != "beat":
+        return []
     with get_sessionmaker()() as db:
         ids = due_source_ids(db, utcnow())
     for source_id in ids:

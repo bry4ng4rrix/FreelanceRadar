@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     applications,
     auth,
+    automation,
     health,
     notifications,
     offers,
@@ -20,3 +21,4 @@ api_router.include_router(profile.router)
 api_router.include_router(notifications.router)
 api_router.include_router(applications.router)
 api_router.include_router(replies.router)
+api_router.include_router(automation.router)

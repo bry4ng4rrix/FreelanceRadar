@@ -1,0 +1,95 @@
+{
+  "id": "frCollecteQuotidienne",
+  "name": "FreelanceRadar — collecte quotidienne",
+  "active": false,
+  "nodes": [
+    {
+      "id": "6c3f0a1e-5b2d-4c8e-9f10-2a7b3c4d5e61",
+      "name": "Chaque jour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2a9b7c6d-1e3f-4a5b-8c7d-9e0f1a2b3c4d",
+      "name": "Lancer manuellement",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "8d4e1b2f-6c3e-4d9f-a021-3b8c4d5e6f72",
+      "name": "Lancer la collecte",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.FREELANCERADAR_API_URL }}/api/v1/automation/collections/run",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Service-Token",
+              "value": "={{ $env.FREELANCERADAR_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Chaque jour": {
+      "main": [
+        [
+          {
+            "node": "Lancer la collecte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancer manuellement": {
+      "main": [
+        [
+          {
+            "node": "Lancer la collecte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

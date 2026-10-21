@@ -187,11 +187,21 @@ def is_due(source: Source, now: datetime) -> bool:
     return source.last_attempt_at + timedelta(minutes=source.frequency_minutes) <= now
 
 
-def due_source_ids(db: Session, now: datetime) -> list[int]:
-    """Sources actives, avec connecteur, non bloquées, dont la fréquence est écoulée."""
+def _schedulable(db: Session) -> list[Source]:
+    """Sources actives, avec connecteur, ni bloquées ni non supportées."""
     stmt = select(Source).where(
         Source.is_active.is_(True),
         Source.target_type.in_(supported_target_types()),
         Source.health_status.not_in(_NOT_SCHEDULABLE),
     )
-    return [s.id for s in db.scalars(stmt) if is_due(s, now)]
+    return list(db.scalars(stmt.order_by(Source.id)))
+
+
+def due_source_ids(db: Session, now: datetime) -> list[int]:
+    """Sources planifiables dont la fréquence est écoulée (planification par Celery Beat)."""
+    return [s.id for s in _schedulable(db) if is_due(s, now)]
+
+
+def schedulable_source_ids(db: Session) -> list[int]:
+    """Toutes les sources planifiables, sans tenir compte de la fréquence (déclenchement n8n)."""
+    return [s.id for s in _schedulable(db)]

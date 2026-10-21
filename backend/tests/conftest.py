@@ -114,9 +114,11 @@ def rss_handler(request: httpx2.Request) -> httpx2.Response:
 class FakeQueue(CollectionQueue):
     def __init__(self) -> None:
         self.enqueued: list[int] = []
+        self.triggers: list[str] = []
 
-    def enqueue(self, source_id: int) -> str:
+    def enqueue(self, source_id: int, trigger: str = "manual") -> str:
         self.enqueued.append(source_id)
+        self.triggers.append(trigger)
         return f"fake-task-{source_id}"
 
 

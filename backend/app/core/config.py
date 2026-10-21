@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     http_max_redirects: int = Field(default=5, ge=0, le=10)
     http_user_agent: str = "FreelanceRadar/0.1 (+agregateur personnel d'offres)"
     scheduler_interval_seconds: int = Field(default=60, ge=10)
+    # beat : Celery Beat collecte chaque source à sa fréquence ; n8n : un workflow n8n déclenche
+    # la collecte (POST /automation/collections/run) et Beat ne planifie plus les collectes.
+    collection_scheduler: Literal["beat", "n8n"] = "beat"
+    # Jeton des automatisations (n8n), envoyé dans l'en-tête X-Service-Token. Absent = refusé.
+    service_api_token: SecretStr | None = Field(default=None, min_length=32)
 
     # SMTP : configuration du compte d'envoi des candidatures. Aucun e-mail n'est envoyé tant que
     # EMAIL_SENDING_ENABLED est faux (et l'envoi lui-même n'est pas encore implémenté, FR-041).

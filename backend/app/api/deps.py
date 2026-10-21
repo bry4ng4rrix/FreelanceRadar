@@ -1,8 +1,9 @@
+import hmac
 from collections.abc import Iterator
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis import Redis
 from sqlalchemy.orm import Session
@@ -43,10 +44,10 @@ def get_http_client(settings: SettingsDep) -> Iterator[SafeHttpClient]:
 class CollectionQueue:
     """Point d'entrée vers Celery, remplaçable dans les tests."""
 
-    def enqueue(self, source_id: int) -> str:
+    def enqueue(self, source_id: int, trigger: str = "manual") -> str:
         from app.tasks.collection import collect_source
 
-        return str(collect_source.delay(source_id, "manual", False).id)
+        return str(collect_source.delay(source_id, trigger, False).id)
 
 
 def get_collection_queue() -> CollectionQueue:
@@ -79,3 +80,17 @@ def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def require_service_token(
+    settings: SettingsDep,
+    x_service_token: Annotated[str | None, Header()] = None,
+) -> None:
+    """Accès des automatisations (n8n) : jeton de service comparé en temps constant."""
+    expected = settings.service_api_token
+    if expected is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Jeton de service non configuré.")
+    if x_service_token is None or not hmac.compare_digest(
+        x_service_token.encode(), expected.get_secret_value().encode()
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Jeton de service invalide.")

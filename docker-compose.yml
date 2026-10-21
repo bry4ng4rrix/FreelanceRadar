@@ -107,9 +107,54 @@ services:
       redis:
         condition: service_healthy
 
+  # Import (et activation) du workflow quotidien avant le démarrage de n8n. Idempotent.
+  n8n-import:
+    image: n8nio/n8n:2.45.1
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        n8n import:workflow --input=/workflows/daily-collection.json &&
+        n8n publish:workflow --id=frCollecteQuotidienne
+    environment: &n8n-env
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY manquant dans .env}
+      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-Indian/Antananarivo}
+      TZ: ${N8N_TIMEZONE:-Indian/Antananarivo}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # Le workflow lit l'URL et le jeton via $env. Ce conteneur ne reçoit aucun autre secret
+      # du backend (pas de mot de passe de base, SMTP ou Gemini).
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      # Lus par le workflow ($env) : API sur le réseau Docker interne, jeton de service.
+      FREELANCERADAR_API_URL: http://api:8000
+      FREELANCERADAR_SERVICE_TOKEN: ${SERVICE_API_TOKEN:?SERVICE_API_TOKEN manquant dans .env}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+    networks: [internal]
+
+  n8n:
+    image: n8nio/n8n:2.45.1
+    restart: unless-stopped
+    environment: *n8n-env
+    ports:
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      n8n-import:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    networks: [internal]
+
 volumes:
   postgres_data:
   redis_data:
+  n8n_data:
 
 networks:
   internal:
