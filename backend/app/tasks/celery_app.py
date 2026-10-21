@@ -4,7 +4,11 @@ from app.core.config import get_settings
 
 _settings = get_settings()
 
-celery_app = Celery("freelanceradar", broker=_settings.redis_url, include=["app.tasks.collection"])
+celery_app = Celery(
+    "freelanceradar",
+    broker=_settings.redis_url,
+    include=["app.tasks.collection", "app.tasks.applications"],
+)
 celery_app.conf.update(
     task_ignore_result=True,
     timezone="UTC",

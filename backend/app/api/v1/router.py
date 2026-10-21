@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, health, notifications, offers, profile, sources
+from app.api.v1 import applications, auth, health, notifications, offers, profile, sources
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -9,3 +9,4 @@ api_router.include_router(sources.router)
 api_router.include_router(offers.router)
 api_router.include_router(profile.router)
 api_router.include_router(notifications.router)
+api_router.include_router(applications.router)

@@ -86,6 +86,7 @@ Depuis `backend/` :
 |---|---|
 | Installer | `uv sync` |
 | Migrer | `uv run alembic upgrade head` (vérifier : `uv run alembic check`) |
+| ⚠️ Jamais de `alembic downgrade` sur la base de développement | L'aller-retour des migrations est vérifié automatiquement par `pytest` sur `<base>_test` (incident du 2026-10-21 : tables profil/compétences/notifications de dev supprimées par un downgrade) |
 | Créer un utilisateur | `uv run python -m app.cli create-user --email vous@example.com` |
 | Importer les sources | `uv run python -m app.cli import-sources data/sources.json` |
 | API | `uv run uvicorn app.main:app --reload` → http://127.0.0.1:8000/docs |

@@ -53,6 +53,35 @@ def notify_active_users(
     return len(db.execute(stmt).all())
 
 
+def notify_user(
+    db: Session,
+    user_id: int,
+    *,
+    type: str,
+    title: str,
+    body: str,
+    dedup_key: str,
+    offer_id: int | None = None,
+    application_id: int | None = None,
+) -> int:
+    """Notifie un seul utilisateur (événements de ses candidatures). 0 si déjà notifié."""
+    stmt = (
+        insert(Notification)
+        .values(
+            user_id=user_id,
+            type=type,
+            title=title,
+            body=body,
+            dedup_key=dedup_key,
+            offer_id=offer_id,
+            application_id=application_id,
+        )
+        .on_conflict_do_nothing(constraint="uq_notifications_user_id_dedup_key")
+        .returning(Notification.id)
+    )
+    return len(db.execute(stmt).all())
+
+
 def notify_collection_outcome(
     db: Session,
     source: Source,

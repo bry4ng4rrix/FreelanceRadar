@@ -14,7 +14,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
-NOTIFICATION_TYPES = ("new_offers", "source_error", "source_blocked")
+NOTIFICATION_TYPES = (
+    "new_offers",
+    "source_error",
+    "source_blocked",
+    "application_ready",
+    "application_sent",
+    "application_failed",
+)
 
 
 class Notification(Base):
@@ -44,6 +51,9 @@ class Notification(Base):
     source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id", ondelete="SET NULL"))
     collection_run_id: Mapped[int | None] = mapped_column(
         ForeignKey("collection_runs.id", ondelete="SET NULL")
+    )
+    application_id: Mapped[int | None] = mapped_column(
+        ForeignKey("applications.id", ondelete="SET NULL")
     )
 
     created_at: Mapped[datetime] = mapped_column(

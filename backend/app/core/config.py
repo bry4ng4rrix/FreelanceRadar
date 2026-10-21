@@ -50,6 +50,16 @@ class Settings(BaseSettings):
     smtp_from_email: str | None = None
     smtp_from_name: str | None = None
     smtp_timeout_seconds: float = Field(default=15, gt=0, le=120)
+    # Garde-fou : nombre maximal de candidatures envoyées par utilisateur et par jour.
+    email_daily_limit: int = Field(default=20, ge=1, le=500)
+
+    # IA : rédaction des candidatures. Sans clé, la génération est refusée proprement.
+    ai_provider: Literal["gemini", "disabled"] = "gemini"
+    gemini_api_key: SecretStr | None = None
+    # Modèle recommandé par la documentation officielle pour les nouveaux projets (2026-10).
+    gemini_model: str = "gemini-3.8-flash"
+    ai_temperature: float = Field(default=0.4, ge=0, le=2)
+    ai_timeout_seconds: float = Field(default=60, gt=0, le=300)
 
 
 @lru_cache
