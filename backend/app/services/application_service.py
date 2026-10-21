@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 EDITABLE = ("pending_approval", "generation_failed", "failed")
 SENDABLE = ("pending_approval", "failed")
 REGENERABLE = ("pending_approval", "generation_failed", "failed")
-FINAL = ("sending", "sent", "delivery_unknown")
+FINAL = ("sending", "sent", "delivery_unknown", "replied")
 # Statuts d'offre que la préparation d'une candidature peut remplacer.
 _OFFER_STATUSES_BEFORE_APPLICATION = ("new", "relevant", "favorite")
 

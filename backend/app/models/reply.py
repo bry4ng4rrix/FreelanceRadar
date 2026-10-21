@@ -10,15 +10,16 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+from app.models.application import Application
 
 MATCH_METHODS = ("headers", "sender_subject")
 
 
 class ReceivedReply(Base):
-    """Réponse d'un client à une candidature, lue par IMAP (seuls les messages associés sont gardés).
+    """Réponse d'un client à une candidature, lue par IMAP (seuls les messages associés).
 
     Les pièces jointes ne sont pas conservées : seul le texte du message est stocké.
     """
@@ -45,6 +46,12 @@ class ReceivedReply(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    application: Mapped[Application] = relationship(lazy="joined")
+
+    @property
+    def offer_title(self) -> str:
+        return self.application.offer_title
 
 
 class EmailSyncState(TimestampMixin, Base):

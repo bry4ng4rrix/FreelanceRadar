@@ -7,7 +7,7 @@ _settings = get_settings()
 celery_app = Celery(
     "freelanceradar",
     broker=_settings.redis_url,
-    include=["app.tasks.collection", "app.tasks.applications"],
+    include=["app.tasks.collection", "app.tasks.applications", "app.tasks.replies"],
 )
 celery_app.conf.update(
     task_ignore_result=True,
@@ -19,6 +19,11 @@ celery_app.conf.update(
         "schedule-due-sources": {
             "task": "collection.schedule_due_sources",
             "schedule": float(_settings.scheduler_interval_seconds),
-        }
+        },
+        # Sans effet tant que EMAIL_SYNC_ENABLED est faux.
+        "sync-replies": {
+            "task": "replies.sync",
+            "schedule": float(_settings.imap_sync_interval_seconds),
+        },
     },
 )

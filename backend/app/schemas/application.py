@@ -13,6 +13,7 @@ ApplicationStatus = Literal[
     "sent",
     "failed",
     "delivery_unknown",
+    "replied",
     "cancelled",
 ]
 
