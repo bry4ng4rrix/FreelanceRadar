@@ -3,17 +3,46 @@
 Agrégateur personnel d'offres freelance : collecte (RSS d'abord), déduplication, API sécurisée.
 État d'avancement : `ROADMAP.md`. Commandes et décisions : `PLANNING.md`.
 
-## Démarrage local (backend)
+## Démarrage en une commande (Docker)
 
-Prérequis : Docker + Compose, [uv](https://docs.astral.sh/uv/).
+Prérequis : Docker + Compose.
 
 ```bash
 # 1. Configuration : copier puis remplacer chaque "change-me" par un secret fort
 cp .env.example .env
 python3 -c "import secrets; print(secrets.token_hex(32))"
 
-# 2. PostgreSQL et Redis
-docker compose up -d
+# 2. Tout le backend : PostgreSQL, Redis, migrations, API, worker et Beat
+docker compose up -d --build
+docker compose ps                    # api "healthy", migrate "Exited (0)"
+# API : http://127.0.0.1:8000/docs
+
+# 3. Premier lancement : compte et sources
+docker compose exec api python -m app.cli create-user --email vous@example.com
+docker compose exec api python -m app.cli import-sources data/sources.json
+```
+
+Commandes utiles :
+
+```bash
+docker compose logs -f api worker beat          # journaux
+docker compose exec api python -m app.cli check-smtp   # teste le SMTP, n'envoie rien
+docker compose up -d --build                    # après une mise à jour du code
+docker compose down                             # arrêt (les données sont conservées)
+```
+
+Ne lancez pas en même temps l'API Docker et `uv run uvicorn` (même port 8000), ni deux Beat
+(collectes en double).
+
+## Démarrage pour le développement (uv)
+
+Prérequis : Docker + Compose, [uv](https://docs.astral.sh/uv/).
+
+```bash
+# 1. Configuration : comme ci-dessus
+
+# 2. PostgreSQL et Redis seulement
+docker compose up -d postgres redis
 docker compose ps            # les deux services doivent être "healthy"
 
 # 3. Backend

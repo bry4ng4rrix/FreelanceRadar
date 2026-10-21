@@ -23,10 +23,13 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [x] FR-051a — Centre de notifications : table `notifications` (anti-doublon `dedup_key`), notifications « nouvelles offres » (une par collecte) et « source en erreur / bloquée » (sur changement d'état), `GET /notifications`, `unread-count`, `read`, `mark-all-read` ; onglet mobile Alertes avec badge (relu toutes les 60 s, au retour au premier plan et à l'ouverture).
   - Vérification : backend 99 tests (27 nouveaux : validation, isolation entre utilisateurs, anti-doublon, échec de notification sans effet sur la collecte), ruff, mypy strict, migration aller-retour ; mobile `flutter analyze` sans remarque, 43 tests ; contrat Dart comparé à l'OpenAPI.
 
+- [x] FR-007 — Backend conteneurisé : `backend/Dockerfile` (non root), services `migrate`, `api`, `worker`, `beat` ; `docker compose up -d --build` démarre tout.
+  - Vérification : image construite ; migrate `Exited (0)` puis api `healthy` ; `/ready` = 200 depuis l'hôte ; collectes réelles exécutées par le worker conteneurisé, déclenchées par Beat ; processus `uid=10001(app)` ; aucun secret dans les logs.
+- [x] FR-041a — Configuration SMTP (`mail.labeltechnology.mg:465`, TLS) et commande `check-smtp` (connexion + authentification, aucun envoi).
+  - Vérification : 6 tests sur serveur simulé (dont absence du mot de passe dans les messages) ; authentification réelle réussie une fois, depuis l'hôte puis depuis le conteneur, sans envoi.
+
 ## À faire — backend (ordre recommandé)
 
-- [ ] FR-007 — Conteneuriser l'API, le worker et Beat (Dockerfile, services Compose, migrations au démarrage, utilisateur non root).
-  - Critères : `docker compose up -d` démarre tout ; `/ready` = 200 depuis l'hôte ; une collecte planifiée s'exécute dans le conteneur worker.
 - [ ] FR-013 — Ajuster la configuration des sources selon `PLANNING.md` §5 (Remotive ≥ 360 min, Upwork désactivées) — **décision utilisateur requise**.
 - [ ] FR-014 — Alerte de panne répétée : source passée en `error` après N échecs consécutifs visible dans l'API (base des notifications futures).
 - [ ] FR-020b — Profil : expériences, diplômes et certifications.
@@ -35,7 +38,7 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [ ] FR-023 — Tableau de bord / statistiques.
 - [ ] FR-030 — IA : interface commune, Gemini, Ollama (`gemma3:4b` dispo en local), sorties validées.
 - [ ] FR-040 — Candidatures : brouillons versionnés, approbation, anti-doublon.
-- [ ] FR-041 — SMTP (sans envoi réel en test), statuts distincts, idempotence.
+- [ ] FR-041b — Envoi SMTP des candidatures (sans envoi réel en test), statuts distincts, idempotence.
 - [ ] FR-050 — IMAP et association prudente des réponses.
 - [ ] FR-051b — Notifications push FCM (projet Firebase requis) et préférences par type.
 - [ ] FR-013b — Connecteurs HTML/Playwright, source par source, après vérification des CGU.

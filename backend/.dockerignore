@@ -1,0 +1,13 @@
+# Le contexte de build ne contient que ce dont l'image a besoin.
+.venv
+.env
+.env.*
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+tests
+celerybeat-schedule*
+Dockerfile
+.dockerignore

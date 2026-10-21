@@ -46,11 +46,13 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 | D14 | Un profil par utilisateur, créé vide au premier `GET /profile` (e-mail du compte prérempli) ; niveaux de compétence toujours saisis par l'utilisateur | Pas d'inscription séparée ; ne jamais inventer une compétence |
 | D15 | Notifications persistées pour tous les utilisateurs actifs, uniques par `(user_id, dedup_key)` ; nouvelles offres = 1 par collecte ; erreurs = seulement sur changement d'état ; un échec de notification n'affecte pas la collecte | Pas de spam ni de doublon (`notifications.md` §7) |
 | D16 | Sans FCM, le badge mobile est relu toutes les 60 s au premier plan | En attendant le projet Firebase |
+| D17 | Une seule image backend (Python 3.12.15-slim, uv 0.13.0, utilisateur non root) pour API, worker, Beat et migrations ; `migrate` s'exécute avant les autres à chaque `up` | Démarrage en une commande, migrations fiables |
+| D18 | SMTP en TLS direct (port 465, certificat vérifié) ; secrets uniquement dans `.env` ; envoi désactivé (`EMAIL_SENDING_ENABLED=false`) | Serveur sondé : 465 et 587 disponibles, 25 fermé |
 
 ## 4. Risques et limites connus
 
 - **DNS rebinding** : entre la validation DNS et la connexion, la résolution peut changer. Risque résiduel documenté dans `collectors/http.py`.
-- **Limitation de connexion** : par couple IP + e-mail (5 échecs / 15 min). Un attaquant multipliant les IP n'est pas freiné globalement.
+- **Limitation de connexion** : par couple IP + e-mail (5 échecs / 15 min). Un attaquant multipliant les IP n'est pas freiné globalement. Dans Docker sans reverse proxy, l'IP vue est celle de la passerelle Docker : la limite devient de fait par e-mail.
 - **Jetons de renouvellement** sans rotation stockée : un refresh volé reste valable jusqu'à expiration ou déconnexion (qui révoque tout).
 - **Sources Playwright** : sélecteurs fournis par l'utilisateur, non vérifiés ; aucun connecteur Playwright encore.
 - **Périmètre** : backend + application mobile (offres, sources) ; n8n, IA, e-mails non commencés.
@@ -72,8 +74,11 @@ Depuis la racine (`.env` requis, copier `.env.example`) :
 
 | Usage | Commande |
 |---|---|
-| Démarrer PostgreSQL + Redis | `docker compose up -d` puis `docker compose ps` |
-| Logs des services | `docker compose logs -f postgres redis` |
+| Tout le backend (PostgreSQL, Redis, migrations, API, worker, Beat) | `docker compose up -d --build` puis `docker compose ps` |
+| PostgreSQL + Redis seulement (développement avec uv) | `docker compose up -d postgres redis` |
+| Logs | `docker compose logs -f api worker beat` |
+| Commandes d'administration dans Docker | `docker compose exec api python -m app.cli <commande>` |
+| Arrêter (données conservées) | `docker compose down` |
 
 Depuis `backend/` :
 
@@ -86,6 +91,7 @@ Depuis `backend/` :
 | API | `uv run uvicorn app.main:app --reload` → http://127.0.0.1:8000/docs |
 | Worker | `uv run celery -A app.tasks.celery_app worker --loglevel=INFO` |
 | Beat (une seule instance) | `uv run celery -A app.tasks.celery_app beat --loglevel=INFO` |
+| Tester le SMTP (aucun envoi) | `uv run python -m app.cli check-smtp` |
 | Tests | `uv run pytest` (PostgreSQL requis pour l'intégration, sinon ignorés avec raison) |
 | Qualité | `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests migrations/env.py` |
 

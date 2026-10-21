@@ -18,6 +18,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - Profil professionnel et compétences : API `/profile` et `/profile/skills`, écrans mobiles Profil, Modifier le profil, Compétences (FR-020a).
 - Centre de notifications : nouvelles offres et sources en erreur ou bloquées, API `/notifications`, onglet mobile Alertes avec badge (FR-051a).
 - Migration `9e708b8a9030` : tables `profiles`, `skills`, `notifications` (ajout uniquement).
+- Docker : image du backend et services `migrate`, `api`, `worker`, `beat` ; tout le backend démarre avec `docker compose up -d --build` (FR-007).
+- Configuration SMTP (variables `SMTP_*`, envoi désactivé par défaut) et commande `check-smtp` qui vérifie la connexion sans rien envoyer (FR-041a).
 
 ### Supprimé
 - Mobile : écrans sans équivalent backend (candidatures, documents, notifications, profil, administration, temps réel), conservés dans le commit `f55f266`.

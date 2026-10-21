@@ -2,6 +2,7 @@
 
 uv run python -m app.cli create-user --email vous@example.com
 uv run python -m app.cli import-sources data/sources.json
+uv run python -m app.cli check-smtp   # connexion + authentification, aucun envoi
 """
 
 import argparse
@@ -12,8 +13,10 @@ from pathlib import Path
 
 from pydantic import TypeAdapter, ValidationError
 
+from app.core.config import get_settings
 from app.db.session import get_sessionmaker
 from app.schemas.source import SourceCreate
+from app.services.email_service import check_smtp_connection
 from app.services.source_service import import_sources
 from app.services.user_service import create_user
 
@@ -47,6 +50,12 @@ def _import_sources(path: Path) -> int:
     return 0
 
 
+def _check_smtp() -> int:
+    result = check_smtp_connection(get_settings())
+    print(result.message, file=sys.stdout if result.ok else sys.stderr)
+    return 0 if result.ok else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -54,9 +63,12 @@ def main(argv: list[str] | None = None) -> int:
     user.add_argument("--email", required=True)
     imp = sub.add_parser("import-sources", help="Importer des sources depuis un fichier JSON.")
     imp.add_argument("path", type=Path)
+    sub.add_parser("check-smtp", help="Tester la connexion SMTP (aucun e-mail envoyé).")
     args = parser.parse_args(argv)
     if args.command == "create-user":
         return _create_user(args.email)
+    if args.command == "check-smtp":
+        return _check_smtp()
     return _import_sources(args.path)
 
 

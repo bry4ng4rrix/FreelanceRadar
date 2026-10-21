@@ -38,6 +38,19 @@ class Settings(BaseSettings):
     http_user_agent: str = "FreelanceRadar/0.1 (+agregateur personnel d'offres)"
     scheduler_interval_seconds: int = Field(default=60, ge=10)
 
+    # SMTP : configuration du compte d'envoi des candidatures. Aucun e-mail n'est envoyé tant que
+    # EMAIL_SENDING_ENABLED est faux (et l'envoi lui-même n'est pas encore implémenté, FR-041).
+    email_sending_enabled: bool = False
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=465, ge=1, le=65535)
+    # ssl = TLS dès la connexion (port 465) ; starttls = chiffrement négocié (port 587).
+    smtp_security: Literal["ssl", "starttls"] = "ssl"
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_from_email: str | None = None
+    smtp_from_name: str | None = None
+    smtp_timeout_seconds: float = Field(default=15, gt=0, le=120)
+
 
 @lru_cache
 def get_settings() -> Settings:

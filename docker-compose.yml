@@ -1,7 +1,22 @@
-# Environnement de développement. Les ports sont liés à 127.0.0.1 uniquement :
-# PostgreSQL et Redis ne doivent jamais être exposés publiquement.
-# L'API, le worker et Beat tournent pour l'instant sur l'hôte via `uv run` (voir README.md).
+# Backend complet en une commande : `docker compose up -d --build`.
+#
+# Ordre de démarrage : postgres + redis (healthy) -> migrate (alembic upgrade head, une fois)
+# -> api, worker et beat. Les ports sont liés à 127.0.0.1 uniquement : PostgreSQL et Redis
+# ne doivent jamais être exposés publiquement (en production, l'API passe par un reverse proxy).
 name: freelanceradar
+
+# Configuration commune aux services du backend (même image, commande différente).
+x-backend: &backend
+  build:
+    context: ./backend
+  image: freelanceradar-backend:local
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    # Dans le réseau Docker, les services se joignent par leur nom (et non 127.0.0.1).
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    REDIS_URL: redis://redis:6379/0
+  networks: [internal]
 
 services:
   postgres:
@@ -36,6 +51,61 @@ services:
       timeout: 5s
       retries: 10
     networks: [internal]
+
+  # Migrations : s'exécute une fois à chaque `up`, avant l'API et les workers.
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=4)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  # Une seule instance de Beat : ne jamais la mettre à l'échelle (collectes en double).
+  beat:
+    <<: *backend
+    command:
+      - celery
+      - -A
+      - app.tasks.celery_app
+      - beat
+      - --loglevel=INFO
+      - --schedule=/tmp/celerybeat-schedule
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
