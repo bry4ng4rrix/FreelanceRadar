@@ -41,6 +41,9 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [x] FR-013 — Sources : Codeur et Freelancer passées sur leurs flux RSS officiels, sources inaccessibles ou sans connecteur désactivées, Remotive à 360 min (`PLANNING.md` §5).
   - Vérification : en local, test puis collecte réelle (Codeur : 35 offres, Freelancer : 30) ; `sources.json` validé par le schéma ; backend 144 tests. **VPS : non appliqué** (commande à lancer par l'utilisateur).
 
+- [x] FR-015 — Offres expirées : archivage automatique après 30 j, suppression définitive après 90 j (offres archivées), non-collecte des offres trop anciennes ; favoris, notes et candidatures protégés ; tâche Beat quotidienne et `cleanup-offers --dry-run`. Filtre mobile « Publiées depuis 24 h / 7 j / 30 j » déjà présent.
+  - Vérification : 7 tests (dont 4 mutations des protections, chacune détectée), backend 151 tests, ruff, mypy, `alembic check` (aucun changement de schéma) ; essai à blanc sur la base locale : 13 offres à archiver, 0 à supprimer.
+
 ## À faire — backend (ordre recommandé)
 
 - [ ] FR-014 — Alerte de panne répétée : source passée en `error` après N échecs consécutifs visible dans l'API (base des notifications futures).

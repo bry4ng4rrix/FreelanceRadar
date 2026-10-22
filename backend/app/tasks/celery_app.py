@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config import get_settings
 
@@ -7,7 +8,12 @@ _settings = get_settings()
 celery_app = Celery(
     "freelanceradar",
     broker=_settings.redis_url,
-    include=["app.tasks.collection", "app.tasks.applications", "app.tasks.replies"],
+    include=[
+        "app.tasks.collection",
+        "app.tasks.applications",
+        "app.tasks.replies",
+        "app.tasks.offers",
+    ],
 )
 celery_app.conf.update(
     task_ignore_result=True,
@@ -24,6 +30,11 @@ celery_app.conf.update(
         "sync-replies": {
             "task": "replies.sync",
             "schedule": float(_settings.imap_sync_interval_seconds),
+        },
+        # Offres expirées : chaque jour à 00:30 UTC (03:30 à Antananarivo).
+        "cleanup-offers": {
+            "task": "offers.cleanup",
+            "schedule": crontab(hour=0, minute=30),
         },
     },
 )

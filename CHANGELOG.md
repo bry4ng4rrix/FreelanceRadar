@@ -25,6 +25,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - Réponses des clients lues par IMAP (lecture seule), associées aux candidatures, notifiées et affichées dans le Rapport ; migration `d641e0c2acf4`.
 - n8n : collecte quotidienne automatique (workflow importé et activé au démarrage).
 - Production : `docker-compose.prod.yml`, workflow GitHub Actions (tests, image GHCR, déploiement SSH), guide `docs/DEPLOYMENT.md`.
+- Offres expirées : archivées automatiquement après 30 jours, supprimées après 90 jours, plus collectées au-delà de 30 jours ; favoris, offres annotées ou avec candidature conservés ; commande `cleanup-offers --dry-run` (FR-015).
 
 ### Modifié
 - Sources : Codeur.com et Freelancer.com collectées par leurs flux RSS officiels ; Malt, Guru, Contra, Free-Work, goLance, DevJobScanner et Upwork désactivées ; Remotive toutes les 6 h (FR-013).

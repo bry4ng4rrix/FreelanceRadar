@@ -46,6 +46,7 @@ $C logs -f --tail=100 api worker beat n8n            # journaux
 $C exec api python -m app.cli create-user --email vous@example.com   # compte (mot de passe demandé)
 $C exec api python -m app.cli check-smtp             # SMTP, aucun envoi
 $C exec api python -m app.cli check-imap             # IMAP, lecture seule
+$C exec api python -m app.cli cleanup-offers --dry-run   # offres expirées (essai)
 $C up -d                                             # redémarrer avec l'image mémorisée (.env)
 ```
 

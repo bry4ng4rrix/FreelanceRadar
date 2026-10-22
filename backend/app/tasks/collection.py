@@ -10,6 +10,7 @@ from app.db.base import utcnow
 from app.db.session import get_sessionmaker
 from app.models import Source
 from app.services.collection_service import due_source_ids, is_due, run_collection
+from app.services.offer_cleanup_service import expiry_cutoff
 from app.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -51,8 +52,16 @@ def collect_source(self: Any, source_id: int, trigger: str, check_due: bool) -> 
                 return "missing"
             if check_due and not is_due(source, utcnow()):
                 return "not_due"
-            with SafeHttpClient(get_settings()) as client:
-                result = run_collection(db, source_id, client, trigger, task_id=self.request.id)  # type: ignore[arg-type]
+            settings = get_settings()
+            with SafeHttpClient(settings) as client:
+                result = run_collection(
+                    db,
+                    source_id,
+                    client,
+                    trigger,  # type: ignore[arg-type]
+                    task_id=self.request.id,
+                    published_after=expiry_cutoff(settings, utcnow()),
+                )
             status = result.run.status
     finally:
         lock.release()

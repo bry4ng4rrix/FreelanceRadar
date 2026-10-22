@@ -83,6 +83,15 @@ def normalize_offers(source_id: int, raw_offers: list[RawOffer]) -> NormalizedOf
     return NormalizedOffers(rows=rows, invalid=invalid)
 
 
+def drop_expired(
+    rows: list[dict[str, Any]], published_after: datetime | None
+) -> list[dict[str, Any]]:
+    """Retire les offres publiées avant la date limite ; sans date de publication : conservées."""
+    if published_after is None:
+        return rows
+    return [r for r in rows if r["published_at"] is None or r["published_at"] >= published_after]
+
+
 def store_offers(db: Session, rows: list[dict[str, Any]]) -> list[int]:
     """Insère les offres et renvoie les identifiants créés.
 
@@ -100,7 +109,9 @@ def run_collection(
     client: SafeHttpClient,
     trigger: Trigger,
     task_id: str | None = None,
+    published_after: datetime | None = None,
 ) -> CollectionResult:
+    """Collecte une source. Les offres publiées avant `published_after` (expirées) sont ignorées."""
     source = db.get(Source, source_id)
     if source is None:
         raise LookupError(f"Source {source_id} introuvable.")
@@ -113,10 +124,12 @@ def run_collection(
 
     retryable = False
     new_ids: list[int] = []
+    expired = 0
     try:
         raw_offers = get_collector(source.target_type).collect(to_source_config(source), client)
         normalized = normalize_offers(source.id, raw_offers)
-        new_ids = store_offers(db, normalized.rows)
+        rows = drop_expired(normalized.rows, published_after)
+        new_ids = store_offers(db, rows)
     except UnsupportedConnectorError as exc:
         _record_failure(source, run, "unsupported", "unsupported", str(exc))
     except SourceBlockedError as exc:
@@ -136,7 +149,8 @@ def run_collection(
         run.items_seen = len(raw_offers)
         run.items_new = new_count
         run.items_invalid = normalized.invalid
-        run.items_duplicate = len(normalized.rows) - new_count
+        run.items_duplicate = len(rows) - new_count
+        expired = len(normalized.rows) - len(rows)
         source.health_status = "ok"
         source.last_success_at = utcnow()
         source.last_error = None
@@ -146,13 +160,14 @@ def run_collection(
     run.finished_at = utcnow()
     db.commit()
     logger.info(
-        "Collecte source=%s run=%s statut=%s nouvelles=%s doublons=%s invalides=%s",
+        "Collecte source=%s run=%s statut=%s nouvelles=%s doublons=%s invalides=%s expirées=%s",
         source.id,
         run.id,
         run.status,
         run.items_new,
         run.items_duplicate,
         run.items_invalid,
+        expired,
     )
     _notify(db, source, run, previous_health, new_ids)
     return CollectionResult(run=run, retryable=retryable)

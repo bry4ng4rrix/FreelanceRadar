@@ -1,8 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # `.env` unique à la racine du dépôt, partagé avec docker-compose.yml.
@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     # Jeton des automatisations (n8n), envoyé dans l'en-tête X-Service-Token. Absent = refusé.
     service_api_token: SecretStr | None = Field(default=None, min_length=32)
 
+    # Offres expirées (date de référence : publication, sinon collecte) ; 0 = désactivé.
+    # Archivées (récupérables) après OFFER_ARCHIVE_AFTER_DAYS, et non collectées au-delà ;
+    # supprimées définitivement après OFFER_PURGE_AFTER_DAYS si elles sont archivées.
+    # Jamais touchées : favoris, offres annotées ou ayant une candidature.
+    offer_archive_after_days: int = Field(default=30, ge=0, le=3650)
+    offer_purge_after_days: int = Field(default=90, ge=0, le=3650)
+
     # SMTP : configuration du compte d'envoi des candidatures. Aucun e-mail n'est envoyé tant que
     # EMAIL_SENDING_ENABLED est faux (et l'envoi lui-même n'est pas encore implémenté, FR-041).
     email_sending_enabled: bool = False
@@ -81,6 +88,13 @@ class Settings(BaseSettings):
     )
     ai_temperature: float = Field(default=0.4, ge=0, le=2)
     ai_timeout_seconds: float = Field(default=60, gt=0, le=300)
+
+    @model_validator(mode="after")
+    def purge_after_archive(self) -> Self:
+        archive, purge = self.offer_archive_after_days, self.offer_purge_after_days
+        if archive and purge and purge <= archive:
+            raise ValueError("OFFER_PURGE_AFTER_DAYS doit dépasser OFFER_ARCHIVE_AFTER_DAYS.")
+        return self
 
 
 @lru_cache

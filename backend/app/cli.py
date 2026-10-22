@@ -4,6 +4,7 @@ uv run python -m app.cli create-user --email vous@example.com
 uv run python -m app.cli import-sources data/sources.json
 uv run python -m app.cli check-smtp   # connexion + authentification, aucun envoi
 uv run python -m app.cli check-imap   # lecture seule : nombre de messages, rien n'est modifié
+uv run python -m app.cli cleanup-offers --dry-run   # offres expirées à archiver / supprimer
 """
 
 import argparse
@@ -15,10 +16,12 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from app.core.config import get_settings
+from app.db.base import utcnow
 from app.db.session import get_sessionmaker
 from app.schemas.source import SourceCreate
 from app.services.email_service import check_smtp_connection
 from app.services.imap_service import ImapError, open_mailbox
+from app.services.offer_cleanup_service import cleanup_expired_offers
 from app.services.source_service import import_sources
 from app.services.user_service import create_user
 
@@ -73,6 +76,19 @@ def _check_imap() -> int:
     return 0
 
 
+def _cleanup_offers(dry_run: bool) -> int:
+    settings = get_settings()
+    with get_sessionmaker()() as db:
+        result = cleanup_expired_offers(db, settings, utcnow(), dry_run=dry_run)
+    verb = ("à archiver", "à supprimer") if dry_run else ("archivées", "supprimées")
+    print(
+        f"Offres {verb[0]} (> {settings.offer_archive_after_days} j) : {result.archived} ; "
+        f"{verb[1]} (> {settings.offer_purge_after_days} j) : {result.purged}"
+        + (" — essai, rien n'a été modifié." if dry_run else ".")
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -82,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
     imp.add_argument("path", type=Path)
     sub.add_parser("check-smtp", help="Tester la connexion SMTP (aucun e-mail envoyé).")
     sub.add_parser("check-imap", help="Tester la lecture IMAP (lecture seule).")
+    cleanup = sub.add_parser("cleanup-offers", help="Archiver / supprimer les offres expirées.")
+    cleanup.add_argument("--dry-run", action="store_true", help="Compter sans rien modifier.")
     args = parser.parse_args(argv)
     if args.command == "create-user":
         return _create_user(args.email)
@@ -89,6 +107,8 @@ def main(argv: list[str] | None = None) -> int:
         return _check_smtp()
     if args.command == "check-imap":
         return _check_imap()
+    if args.command == "cleanup-offers":
+        return _cleanup_offers(args.dry_run)
     return _import_sources(args.path)
 
 

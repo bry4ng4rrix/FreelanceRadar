@@ -54,6 +54,7 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 | D22 | `COLLECTION_SCHEDULER` : `beat` (fréquence par source) ou `n8n` (collecte quotidienne via `POST /automation/collections/run`, jeton de service) ; jamais les deux | Éviter deux planificateurs concurrents |
 | D23 | IMAP en lecture seule (EXAMINE, BODY.PEEK) ; seules les réponses associées à une candidature sont stockées (texte seul, pièces jointes ignorées) | Minimisation des données |
 | D24 | Production : image GHCR par commit (`sha-…`), déploiement par clé SSH dédiée (`restrict`), secrets applicatifs uniquement dans le `.env` du VPS ; ports publiés sur 127.0.0.1 seulement | Même méthode que les autres projets du serveur |
+| D25 | Offres expirées = âge de la date de publication (sinon de collecte) : archivage à 30 j et non-collecte au-delà, suppression définitive à 90 j des offres archivées ; favoris, offres annotées ou liées à une candidature jamais touchés ; tâche Beat quotidienne | Aucune source ne fournit de date d'expiration ; suppression demandée par l'utilisateur le 2026-10-22, toujours précédée d'un passage par les archives |
 
 ## 4. Risques et limites connus
 
@@ -106,6 +107,7 @@ Depuis `backend/` :
 | Worker | `uv run celery -A app.tasks.celery_app worker --loglevel=INFO` |
 | Beat (une seule instance) | `uv run celery -A app.tasks.celery_app beat --loglevel=INFO` |
 | Tester le SMTP (aucun envoi) | `uv run python -m app.cli check-smtp` |
+| Offres expirées (essai, rien modifié) | `uv run python -m app.cli cleanup-offers --dry-run` |
 | Tests | `uv run pytest` (PostgreSQL requis pour l'intégration, sinon ignorés avec raison) |
 | Qualité | `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests migrations/env.py` |
 
