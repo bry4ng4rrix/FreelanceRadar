@@ -67,4 +67,5 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 
 Pour chaque blocage, indiquer la cause, la preuve observée et l'action nécessaire pour le résoudre.
 
+- Déploiement GitHub Actions (étape SSH) : échec code 255 le 2026-10-22 (run 39760493587) ; tests et image GHCR OK. Action : vérifier les secrets `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS` et les **variables** `VPS_HOST`, `VPS_USER`, `VPS_DEPLOY_PATH`, puis relancer le job.
 - Malt, Guru (403 anti-robot), Contra (connexion requise), Upwork (404/403) : désactivées le 2026-10-22. Action : API officielle autorisée uniquement.

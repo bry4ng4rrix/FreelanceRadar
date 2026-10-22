@@ -97,7 +97,17 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
         run: |
+          # Configuration GitHub : Settings → Secrets and variables → Actions.
+          for name in VPS_HOST VPS_USER VPS_DEPLOY_PATH; do
+            [ -n "${!name}" ] || { echo "::error::Variable $name absente (onglet Variables, pas Secrets)."; exit 1; }
+          done
+          for name in SSH_KEY KNOWN_HOSTS; do
+            [ -n "${!name}" ] || { echo "::error::Secret VPS_$name absent (onglet Secrets)."; exit 1; }
+          done
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
