@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/paginated.dart';
 import 'application_models.dart';
+import 'reply_models.dart';
 
 /// Accès à l'API des candidatures (`/applications`).
 class ApplicationsRepository {
@@ -59,6 +60,19 @@ class ApplicationsRepository {
 
   Future<Application> cancel(int id) async =>
       Application.fromJson(asJsonMap(await _api.post('/applications/$id/cancel')));
+
+  /// Réponses des clients (lues par le serveur dans la boîte de réception, IMAP).
+  Future<Paginated<Reply>> replies({int page = 1, int pageSize = 20, int? applicationId}) =>
+      _api.getPage(
+        '/replies',
+        Reply.fromJson,
+        page: page,
+        pageSize: pageSize,
+        query: {'application_id': applicationId},
+      );
+
+  Future<Reply> markReplyRead(int id) async =>
+      Reply.fromJson(asJsonMap(await _api.patch('/replies/$id/read')));
 }
 
 final applicationsRepositoryProvider = Provider<ApplicationsRepository>(

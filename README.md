@@ -1,7 +1,7 @@
 # FreelanceRadar
 
 Agrégateur personnel d'offres freelance : collecte (RSS d'abord), déduplication, API sécurisée.
-État d'avancement : `ROADMAP.md`. Commandes et décisions : `PLANNING.md`.
+État d'avancement : `ROADMAP.md`. Commandes et décisions : `PLANNING.md`. Production : `docs/DEPLOYMENT.md`.
 
 ## Démarrage en une commande (Docker)
 

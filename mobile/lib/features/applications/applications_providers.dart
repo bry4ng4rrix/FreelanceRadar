@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/application_models.dart';
 import 'data/applications_repository.dart';
+import 'data/reply_models.dart';
 
 /// Dernière candidature modifiée (rapport, détail d'offre) à répercuter sur les autres écrans.
 class ApplicationChangesNotifier extends Notifier<Application?> {
@@ -128,5 +129,22 @@ final pendingApplicationsProvider = FutureProvider.autoDispose<List<Application>
   final page = await ref
       .watch(applicationsRepositoryProvider)
       .list(status: ApplicationStatus.pendingApproval, pageSize: 10);
+  return page.items;
+});
+
+/// Dernières réponses reçues (rapport).
+final latestRepliesProvider = FutureProvider.autoDispose<List<Reply>>((ref) async {
+  final page = await ref.watch(applicationsRepositoryProvider).replies(pageSize: 10);
+  return page.items;
+});
+
+/// Réponses reçues pour une candidature.
+final applicationRepliesProvider = FutureProvider.autoDispose.family<List<Reply>, int>((
+  ref,
+  applicationId,
+) async {
+  final page = await ref
+      .watch(applicationsRepositoryProvider)
+      .replies(applicationId: applicationId, pageSize: 50);
   return page.items;
 });

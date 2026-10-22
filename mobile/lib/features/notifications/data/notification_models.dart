@@ -20,6 +20,12 @@ enum NotificationType {
     'Candidature en échec',
     Icons.error_outline_rounded,
     AppColors.danger,
+  ),
+  replyReceived(
+    'reply_received',
+    'Réponse reçue',
+    Icons.mark_email_unread_outlined,
+    AppColors.success,
   );
 
   const NotificationType(this.api, this.label, this.icon, this.color);

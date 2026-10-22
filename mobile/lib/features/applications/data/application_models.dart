@@ -22,6 +22,7 @@ enum ApplicationStatus {
     Icons.help_outline_rounded,
     AppColors.warning,
   ),
+  replied('replied', 'Réponse reçue', Icons.mark_email_read_outlined, AppColors.success),
   cancelled('cancelled', 'Annulée', Icons.block_rounded, AppColors.textTertiary);
 
   const ApplicationStatus(this.api, this.label, this.icon, this.color);
@@ -40,7 +41,11 @@ enum ApplicationStatus {
   bool get canRegenerate => isEditable;
 
   bool get canCancel =>
-      this != sending && this != sent && this != deliveryUnknown && this != cancelled;
+      this != sending &&
+      this != sent &&
+      this != deliveryUnknown &&
+      this != replied &&
+      this != cancelled;
 
   static ApplicationStatus fromApi(Object? value) =>
       values.firstWhere((s) => s.api == value, orElse: () => pendingApproval);

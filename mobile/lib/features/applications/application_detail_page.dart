@@ -14,7 +14,9 @@ import '../../core/widgets/form_fields.dart';
 import '../../core/widgets/ui.dart';
 import 'applications_providers.dart';
 import 'data/application_models.dart';
+import 'data/reply_models.dart';
 import 'widgets/application_widgets.dart';
+import 'widgets/reply_widgets.dart';
 import 'widgets/send_sheet.dart';
 
 /// Candidature : relecture et modification du brouillon rédigé par l'IA, puis validation de l'envoi.
@@ -204,7 +206,8 @@ class _ApplicationBodyState extends ConsumerState<_ApplicationBody> {
               children: [for (final skill in _app.referencedSkills) Pill(skill)],
             ),
           ],
-          if (status == ApplicationStatus.sent) ...[
+          if (status == ApplicationStatus.replied) _ApplicationReplies(applicationId: _app.id),
+          if (status == ApplicationStatus.sent || status == ApplicationStatus.replied) ...[
             const SectionHeader('Message envoyé'),
             SentMessageCard(application: _app),
           ] else if (editable) ...[
@@ -294,6 +297,29 @@ class _ApplicationBodyState extends ConsumerState<_ApplicationBody> {
                   ),
               ],
             ),
+    );
+  }
+}
+
+/// Réponses reçues pour cette candidature.
+class _ApplicationReplies extends ConsumerWidget {
+  const _ApplicationReplies({required this.applicationId});
+
+  final int applicationId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final replies = ref.watch(applicationRepliesProvider(applicationId)).value ?? const <Reply>[];
+    if (replies.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(replies.length > 1 ? 'Réponses (${replies.length})' : 'Réponse'),
+        for (final reply in replies) ...[
+          ReplyCard(reply: reply, showOffer: false, onTap: () => showReply(context, ref, reply)),
+          const Gap(10),
+        ],
+      ],
     );
   }
 }

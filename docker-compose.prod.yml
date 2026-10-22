@@ -1,0 +1,166 @@
+# Production (VPS) : backend complet, image construite par GitHub Actions (GHCR).
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# - PostgreSQL et Redis ne publient AUCUN port : accessibles seulement sur le réseau interne.
+# - API et n8n écoutent sur 127.0.0.1 : exposition publique via nginx (HTTPS) uniquement.
+# - Les secrets sont dans .env (sur le serveur, jamais dans Git).
+name: freelanceradar
+
+x-backend: &backend
+  image: ${BACKEND_IMAGE:-ghcr.io/bry4ng4rrix/freelanceradar-backend:latest}
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    ENVIRONMENT: production
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    REDIS_URL: redis://redis:6379/0
+  networks: [internal]
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  postgres:
+    image: postgres:17.11-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB manquant dans .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER manquant dans .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    logging: *logging
+
+  redis:
+    image: redis:8.2.10-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    logging: *logging
+
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    command:
+      - uvicorn
+      - app.main:app
+      - --host=0.0.0.0
+      - --port=8000
+      - --proxy-headers
+      - --forwarded-allow-ips=*
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=4)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  # Une seule instance de Beat (ne jamais la mettre à l'échelle).
+  beat:
+    <<: *backend
+    command:
+      - celery
+      - -A
+      - app.tasks.celery_app
+      - beat
+      - --loglevel=INFO
+      - --schedule=/tmp/celerybeat-schedule
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  n8n-import:
+    image: n8nio/n8n:2.45.1
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        n8n import:workflow --input=/workflows/daily-collection.json &&
+        n8n publish:workflow --id=frCollecteQuotidienne
+    environment: &n8n-env
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY manquant dans .env}
+      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-Indian/Antananarivo}
+      TZ: ${N8N_TIMEZONE:-Indian/Antananarivo}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # Le workflow lit l'URL et le jeton via $env ; aucun autre secret du backend ici.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      FREELANCERADAR_API_URL: http://api:8000
+      FREELANCERADAR_SERVICE_TOKEN: ${SERVICE_API_TOKEN:?SERVICE_API_TOKEN manquant dans .env}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+    networks: [internal]
+    logging: *logging
+
+  n8n:
+    image: n8nio/n8n:2.45.1
+    restart: unless-stopped
+    environment: *n8n-env
+    ports:
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      n8n-import:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    networks: [internal]
+    logging: *logging
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+
+networks:
+  internal:

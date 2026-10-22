@@ -33,6 +33,11 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [x] FR-070c — Mobile : onglet Rapport (envoyées, à valider, échecs), écran de candidature avec validation de l'envoi, Sources déplacées dans les Réglages.
   - Vérification : backend 132 tests (Gemini et SMTP simulés, aucun envoi), ruff, mypy strict ; mobile 52 tests, analyse sans remarque ; contrat Dart = OpenAPI. Appel Gemini réel : modèle gratuit OK et injection de l'annonce ignorée, mais réponse « ... » observée une fois (validation durcie depuis) puis 503 « forte demande » : génération réelle complète **non revérifiée**. Aucun e-mail réel envoyé.
 
+- [x] FR-050a — Réponses des clients (IMAP, lecture seule EXAMINE/BODY.PEEK) : association par en-têtes puis expéditeur + objet, ambiguïtés ignorées, seules les réponses associées conservées, statut « Réponse reçue », notification ; synchronisation Celery (5 min) ; Rapport mobile ; migration `d641e0c2acf4`.
+- [x] FR-061 — n8n 2.45.1 : workflow « collecte quotidienne » (07:00, Indian/Antananarivo) importé et activé automatiquement, jeton de service ; `COLLECTION_SCHEDULER=n8n` désactive la planification Beat.
+- [x] FR-080a — Production sur le VPS (`~/freelanceradar`, `docker-compose.prod.yml`) + GitHub Actions (tests → GHCR → déploiement SSH par clé dédiée).
+  - Vérification : backend 144 tests, mobile 53 tests ; actionlint sans erreur ; sur le VPS : `/ready` = 200, n8n actif, SMTP/IMAP OK (aucun envoi), workflow exécuté (collecte réelle), aucun secret dans les logs, autres applications non modifiées.
+
 ## À faire — backend (ordre recommandé)
 
 - [ ] FR-013 — Ajuster la configuration des sources selon `PLANNING.md` §5 (Remotive ≥ 360 min, Upwork désactivées) — **décision utilisateur requise**.
@@ -43,9 +48,7 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [ ] FR-023 — Tableau de bord / statistiques.
 - [ ] FR-030b — Ollama en alternative (`gemma3:4b` disponible en local) et choix du fournisseur sans redéploiement.
 - [ ] FR-031 — Push FCM pour « candidature prête à valider » (projet Firebase de l'utilisateur requis).
-- [ ] FR-061 — n8n : déclenchement quotidien des collectes (décision utilisateur requise, voir PLANNING).
 - [ ] FR-041c — Pièces jointes (CV) et premier envoi réel autorisé par l'utilisateur.
-- [ ] FR-050 — IMAP et association prudente des réponses.
 - [ ] FR-051b — Notifications push FCM (projet Firebase requis) et préférences par type.
 - [ ] FR-013b — Connecteurs HTML/Playwright, source par source, après vérification des CGU.
 
@@ -53,7 +56,7 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 
 - [ ] FR-060 — Workflows n8n.
 - [ ] FR-070b — Flutter : écrans candidatures et messagerie (au fil des modules backend FR-040 à FR-050).
-- [ ] FR-080 — Reverse proxy HTTPS, sauvegardes, guide VPS.
+- [ ] FR-080b — HTTPS public (nom de domaine + nginx + certbot, `sudo` requis) et sauvegarde planifiée de PostgreSQL.
 
 ## Bloqué
 

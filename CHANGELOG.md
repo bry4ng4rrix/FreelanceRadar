@@ -22,6 +22,9 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - Configuration SMTP (variables `SMTP_*`, envoi désactivé par défaut) et commande `check-smtp` qui vérifie la connexion sans rien envoyer (FR-041a).
 - Candidatures rédigées par Gemini (modèles gratuits, reprises automatiques), validation puis envoi SMTP, notifications « prête à valider », « envoyée », « échec » ; migration `2497f2b33a23`.
 - Mobile : onglet Rapport, écran de candidature avec validation de l'envoi ; Sources accessibles depuis les Réglages.
+- Réponses des clients lues par IMAP (lecture seule), associées aux candidatures, notifiées et affichées dans le Rapport ; migration `d641e0c2acf4`.
+- n8n : collecte quotidienne automatique (workflow importé et activé au démarrage).
+- Production : `docker-compose.prod.yml`, workflow GitHub Actions (tests, image GHCR, déploiement SSH), guide `docs/DEPLOYMENT.md`.
 
 ### Supprimé
 - Mobile : écrans sans équivalent backend (candidatures, documents, notifications, profil, administration, temps réel), conservés dans le commit `f55f266`.

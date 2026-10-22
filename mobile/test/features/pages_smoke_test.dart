@@ -10,6 +10,7 @@ import 'package:freelanceradar/core/widgets/feedback.dart';
 import 'package:freelanceradar/features/applications/application_detail_page.dart';
 import 'package:freelanceradar/features/applications/data/application_models.dart';
 import 'package:freelanceradar/features/applications/data/applications_repository.dart';
+import 'package:freelanceradar/features/applications/data/reply_models.dart';
 import 'package:freelanceradar/features/dashboard/dashboard_page.dart';
 import 'package:freelanceradar/features/notifications/data/notification_models.dart';
 import 'package:freelanceradar/features/notifications/data/notifications_repository.dart';
@@ -252,6 +253,26 @@ class _FakeApplications implements ApplicationsRepository {
 
   @override
   Future<Application> cancel(int id) async => _byId(id);
+
+  final reply = Reply.fromJson({
+    'id': 1,
+    'application_id': 8,
+    'offer_title': 'Acme Fictive: Développeur FastAPI senior',
+    'from_address': 'client@example.org',
+    'from_name': 'Client Acme',
+    'subject': 'Re: Candidature — Développeur FastAPI',
+    'body_text': 'Bonjour, êtes-vous disponible mardi ?',
+    'received_at': '2026-10-21T12:00:00Z',
+    'created_at': '2026-10-21T12:01:00Z',
+    'read_at': null,
+  });
+
+  @override
+  Future<Paginated<Reply>> replies({int page = 1, int pageSize = 20, int? applicationId}) async =>
+      Paginated(items: [reply], total: 1, page: 1, pageSize: pageSize);
+
+  @override
+  Future<Reply> markReplyRead(int id) async => reply;
 }
 
 late _FakeApplications _applicationsRepo;
@@ -395,6 +416,7 @@ void main() {
       expect(find.text('Envoyées'), findsOneWidget);
       expect(find.text('À VALIDER'), findsOneWidget);
       expect(find.text('RÉPONSES REÇUES'), findsOneWidget);
+      expect(find.text('Client Acme'), findsOneWidget);
       expect(find.textContaining('→ client@example.org'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

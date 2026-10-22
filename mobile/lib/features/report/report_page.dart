@@ -11,7 +11,9 @@ import '../../core/widgets/ui.dart';
 import '../applications/applications_providers.dart';
 import '../applications/data/application_models.dart';
 import '../applications/data/applications_repository.dart';
+import '../applications/data/reply_models.dart';
 import '../applications/widgets/application_widgets.dart';
+import '../applications/widgets/reply_widgets.dart';
 
 /// Onglet « Rapport » : candidatures à valider, candidatures envoyées et réponses reçues.
 class ReportPage extends ConsumerStatefulWidget {
@@ -27,7 +29,8 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   void _invalidateSummary() {
     ref
       ..invalidate(applicationCountsProvider)
-      ..invalidate(pendingApplicationsProvider);
+      ..invalidate(pendingApplicationsProvider)
+      ..invalidate(latestRepliesProvider);
   }
 
   Future<void> _open(Application application) async {
@@ -57,14 +60,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           const Gap(4),
           const _Counters(),
           _PendingSection(onOpen: _open),
-          const SectionHeader('Réponses reçues'),
-          const NoteBox(
-            message:
-                'La lecture de votre boîte de réception (IMAP) n\'est pas encore en place : les '
-                'réponses des clients apparaîtront ici dès qu\'elle sera configurée. En attendant, '
-                'consultez-les dans votre messagerie.',
-            icon: Icons.mark_email_unread_outlined,
-          ),
+          const _RepliesSection(),
           const SectionHeader('Candidatures envoyées'),
         ],
         itemBuilder: (context, application) =>
@@ -147,6 +143,44 @@ class _PendingSection extends ConsumerWidget {
           ApplicationCard(application: application, onTap: () => onOpen(application)),
           const Gap(10),
         ],
+      ],
+    );
+  }
+}
+
+/// Réponses des clients, lues par le serveur dans votre boîte de réception.
+class _RepliesSection extends ConsumerWidget {
+  const _RepliesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final replies = ref.watch(latestRepliesProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionHeader('Réponses reçues'),
+        AsyncValueView<List<Reply>>(
+          value: replies,
+          onRetry: () => ref.invalidate(latestRepliesProvider),
+          loading: const LoadingView(padding: EdgeInsets.symmetric(vertical: 24)),
+          data: (items) => items.isEmpty
+              ? Text(
+                  'Aucune réponse pour l\'instant. Les réponses à vos candidatures envoyées '
+                  'apparaîtront ici automatiquement.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final reply in items) ...[
+                      ReplyCard(reply: reply, onTap: () => showReply(context, ref, reply)),
+                      const Gap(10),
+                    ],
+                  ],
+                ),
+        ),
       ],
     );
   }

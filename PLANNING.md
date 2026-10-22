@@ -51,7 +51,9 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 | D19 | Gemini via `google-genai`, sortie JSON contrainte par schéma puis revalidée (longueurs, texte de remplacement refusé, compétences hors profil retirées) ; annonce transmise comme donnée non fiable | `prompt.md` §11 ; injection testée |
 | D20 | Modèles à offre gratuite en cascade ; 503/429/réseau = erreur temporaire (modèle suivant, puis reprises Celery 30/60/120 s) | Tarifs officiels vérifiés le 2026-10-21 |
 | D21 | Candidature : une par offre ; envoi uniquement après `confirm: true`, destinataire saisi par l'utilisateur, réservation atomique (`sending`), `sent` après acceptation SMTP, `delivery_unknown` jamais renvoyé, limite quotidienne | `prompt.md` §12, `notifications.md` §4 |
-| D22 | Collecte planifiée par Celery Beat (fréquence par source) ; n8n réservé à l'orchestration externe (rapports, alertes) | Éviter deux planificateurs concurrents |
+| D22 | `COLLECTION_SCHEDULER` : `beat` (fréquence par source) ou `n8n` (collecte quotidienne via `POST /automation/collections/run`, jeton de service) ; jamais les deux | Éviter deux planificateurs concurrents |
+| D23 | IMAP en lecture seule (EXAMINE, BODY.PEEK) ; seules les réponses associées à une candidature sont stockées (texte seul, pièces jointes ignorées) | Minimisation des données |
+| D24 | Production : image GHCR par commit (`sha-…`), déploiement par clé SSH dédiée (`restrict`), secrets applicatifs uniquement dans le `.env` du VPS ; ports publiés sur 127.0.0.1 seulement | Même méthode que les autres projets du serveur |
 
 ## 4. Risques et limites connus
 

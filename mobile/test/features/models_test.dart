@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freelanceradar/features/applications/data/application_models.dart';
+import 'package:freelanceradar/features/applications/data/reply_models.dart';
 import 'package:freelanceradar/features/notifications/data/notification_models.dart';
 import 'package:freelanceradar/features/offers/data/offer_models.dart';
 import 'package:freelanceradar/features/profile/data/profile_models.dart';
@@ -149,6 +150,26 @@ void main() {
       expect(ApplicationStatus.sent.isEditable, isFalse);
       expect(ApplicationStatus.sent.canCancel, isFalse);
       expect(ApplicationStatus.fromApi('delivery_unknown'), ApplicationStatus.deliveryUnknown);
+      expect(ApplicationStatus.replied.canCancel, isFalse);
+      expect(ApplicationStatus.replied.isSendable, isFalse);
+    });
+
+    test('Reply', () {
+      final reply = Reply.fromJson({
+        'id': 3,
+        'application_id': 7,
+        'offer_title': 'Offre',
+        'from_address': 'client@example.org',
+        'from_name': null,
+        'subject': 'Re: Candidature',
+        'body_text': 'Merci',
+        'received_at': '2026-10-21T12:00:00Z',
+        'created_at': '2026-10-21T12:01:00Z',
+        'read_at': null,
+        'match_method': 'headers',
+      });
+      expect(reply.sender, 'client@example.org');
+      expect(reply.isRead, isFalse);
     });
   });
   group('Profile', () {
