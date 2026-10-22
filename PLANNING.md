@@ -64,15 +64,22 @@ Dépôt cible : `backend/`, `flutter_app/`, `n8n/`, `docs/`, `scripts/`.
 - **Périmètre** : backend + application mobile (offres, sources) ; n8n, IA, e-mails non commencés.
 - **Mobile** : HTTP en clair autorisé (`usesCleartextTraffic`) pour le réseau local ; à retirer avec le passage en HTTPS. Les compteurs de l'accueil font 4 appels `GET /offers` : un endpoint de statistiques (FR-023) les remplacera.
 
-## 5. État réel des sources (vérifié le 2026-10-21)
+## 5. État réel des sources (vérifié le 2026-10-22)
 
 | Source | Type | Résultat observé | État |
 |---|---|---|---|
-| We Work Remotely — Full Stack | rss | HTTP 200, 76 items ; `robots.txt` autorise | ✅ collectée (75 offres + 1 doublon) |
-| Remotive — feed | rss | HTTP 200, 10 items ; chemin non interdit par `robots.txt` | ✅ collectée — **Remotive demande ≤ 4 appels/jour** pour son API : fréquence de 30 min à porter à ≥ 360 min |
-| Upwork ×2 | rss | 404 (User-Agent du backend), 403 (curl) | ❌ flux indisponibles — à désactiver |
-| Codeur, Free-Work, Malt, Freelancer, Contra, goLance, Guru, DevJobScanner | playwright | Non testées : aucun connecteur Playwright ; CGU et sélecteurs à vérifier | ⏸ non collectées |
+| We Work Remotely — Full Stack | rss | HTTP 200 ; `robots.txt` autorise | ✅ active (30 min) |
+| Remotive — feed | rss | HTTP 200 ; Remotive demande ≤ 4 appels/jour | ✅ active (360 min) |
+| Codeur.com | rss | L'URL `/projets` du JSON renvoie 404 ; flux officiel `/projects/c/developpement.rss` (35 items), autorisé par `robots.txt` | ✅ active (60 min) |
+| Freelancer.com | rss | Flux officiel `/rss/job_python.xml` (30 items) | ✅ active (60 min) |
+| Upwork ×2 | rss | 404 / 403 | ⛔ désactivées |
+| Malt, Guru | playwright | 403 (protection anti-robot) : ne pas contourner | ⛔ désactivées |
+| Contra | playwright | URL 404, fil d'opportunités réservé aux comptes connectés | ⛔ désactivée |
+| Free-Work, goLance, DevJobScanner | playwright | Pages accessibles et autorisées par `robots.txt`, mais aucun sélecteur du JSON n'existe dans les pages | ⏸ désactivées en attendant un connecteur HTML par site (FR-013b) |
 | Asako.mg (`https://www.asako.mg/freelance`) | ? | Citée dans le prompt maître, absente du JSON | ⏸ à évaluer |
+
+Désactiver une source conserve ses offres et son historique. `import-sources` ne modifie jamais une
+source existante : les changements ci-dessus ont été appliqués par l'API (`PATCH /sources/{id}`).
 
 ## 6. Commandes vérifiées
 

@@ -20,6 +20,9 @@ def _with_token(client: TestClient, settings: Settings) -> None:
 
 
 def test_service_token_required(client: TestClient, settings: Settings) -> None:
+    # Indépendant du .env local, qui peut définir SERVICE_API_TOKEN.
+    unconfigured = settings.model_copy(update={"service_api_token": None})
+    client.app.dependency_overrides[get_settings] = lambda: unconfigured  # type: ignore[attr-defined]
     assert client.post(RUN).status_code == 503  # jeton non configuré : refus
     _with_token(client, settings)
     assert client.post(RUN).status_code == 401

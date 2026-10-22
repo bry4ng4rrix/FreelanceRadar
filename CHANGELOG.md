@@ -27,6 +27,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - Production : `docker-compose.prod.yml`, workflow GitHub Actions (tests, image GHCR, déploiement SSH), guide `docs/DEPLOYMENT.md`.
 
 ### Modifié
+- Sources : Codeur.com et Freelancer.com collectées par leurs flux RSS officiels ; Malt, Guru, Contra, Free-Work, goLance, DevJobScanner et Upwork désactivées ; Remotive toutes les 6 h (FR-013).
 - Mobile : la liste des offres est triée par défaut par date de publication, de la plus récente à la plus ancienne (au lieu de la date de collecte).
 
 ### Supprimé

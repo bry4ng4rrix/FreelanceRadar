@@ -38,9 +38,11 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 - [x] FR-080a — Production sur le VPS (`~/freelanceradar`, `docker-compose.prod.yml`) + GitHub Actions (tests → GHCR → déploiement SSH par clé dédiée).
   - Vérification : backend 144 tests, mobile 53 tests ; actionlint sans erreur ; sur le VPS : `/ready` = 200, n8n actif, SMTP/IMAP OK (aucun envoi), workflow exécuté (collecte réelle), aucun secret dans les logs, autres applications non modifiées.
 
+- [x] FR-013 — Sources : Codeur et Freelancer passées sur leurs flux RSS officiels, sources inaccessibles ou sans connecteur désactivées, Remotive à 360 min (`PLANNING.md` §5).
+  - Vérification : en local, test puis collecte réelle (Codeur : 35 offres, Freelancer : 30) ; `sources.json` validé par le schéma ; backend 144 tests. **VPS : non appliqué** (commande à lancer par l'utilisateur).
+
 ## À faire — backend (ordre recommandé)
 
-- [ ] FR-013 — Ajuster la configuration des sources selon `PLANNING.md` §5 (Remotive ≥ 360 min, Upwork désactivées) — **décision utilisateur requise**.
 - [ ] FR-014 — Alerte de panne répétée : source passée en `error` après N échecs consécutifs visible dans l'API (base des notifications futures).
 - [ ] FR-020b — Profil : expériences, diplômes et certifications.
 - [ ] FR-021 — Upload privé du CV (PDF/DOCX, taille et type contrôlés, jamais journalisé).
@@ -62,4 +64,4 @@ Une tâche passe ici uniquement lorsque ses critères d'acceptation sont satisfa
 
 Pour chaque blocage, indiquer la cause, la preuve observée et l'action nécessaire pour le résoudre.
 
-- Sources Upwork (RSS) : flux répondant 404/403 le 2026-10-21. Action : désactiver ou remplacer par une API officielle autorisée.
+- Malt, Guru (403 anti-robot), Contra (connexion requise), Upwork (404/403) : désactivées le 2026-10-22. Action : API officielle autorisée uniquement.

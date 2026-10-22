@@ -2,17 +2,12 @@
   {
     "name": "Codeur.com - Projets Web, Mobile & OCR",
     "category": "Freelance Généraliste (Francophone)",
-    "url": "https://www.codeur.com/projets",
-    "target_type": "playwright",
-    "frequency_minutes": 15,
+    "url": "https://www.codeur.com/projects/c/developpement.rss",
+    "target_type": "rss",
+    "frequency_minutes": 60,
     "is_active": true,
     "keywords": ["web", "mobile", "ocr", "python", "flutter", "react", "scraping", "automatisation"],
-    "selectors": {
-      "item": ".project-item",
-      "title": ".project-title",
-      "description": ".project-description",
-      "link": "a.project-title"
-    }
+    "selectors": {}
   },
   {
     "name": "Upwork - RSS OCR & Python",
@@ -20,7 +15,7 @@
     "url": "https://www.upwork.com/ab/jobs/search/rss?q=ocr+python",
     "target_type": "rss",
     "frequency_minutes": 10,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["ocr", "tesseract", "document processing", "data extraction"],
     "selectors": {}
   },
@@ -30,7 +25,7 @@
     "url": "https://www.upwork.com/ab/jobs/search/rss?q=flutter+mobile",
     "target_type": "rss",
     "frequency_minutes": 10,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["flutter", "dart", "mobile app", "react native"],
     "selectors": {}
   },
@@ -40,7 +35,7 @@
     "url": "https://www.free-work.com/fr/tech-it/jobs",
     "target_type": "playwright",
     "frequency_minutes": 30,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["ocr", "python", "fullstack", "fastapi", "react", "node"],
     "selectors": {
       "item": ".job-card",
@@ -55,7 +50,7 @@
     "url": "https://www.malt.fr/c/freelance/developpeur",
     "target_type": "playwright",
     "frequency_minutes": 60,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["web", "mobile", "python", "ocr", "api"],
     "selectors": {
       "item": ".freelance-card",
@@ -67,17 +62,12 @@
   {
     "name": "Freelancer.com - Scraping & OCR Jobs",
     "category": "Freelance International",
-    "url": "https://www.freelancer.com/jobs/python/1/",
-    "target_type": "playwright",
-    "frequency_minutes": 20,
+    "url": "https://www.freelancer.com/rss/job_python.xml",
+    "target_type": "rss",
+    "frequency_minutes": 60,
     "is_active": true,
     "keywords": ["scraping", "ocr", "python", "automation", "data mining"],
-    "selectors": {
-      "item": ".JobSearchCard-item",
-      "title": ".JobSearchCard-primary-heading-link",
-      "description": ".JobSearchCard-primary-description",
-      "link": ".JobSearchCard-primary-heading-link"
-    }
+    "selectors": {}
   },
   {
     "name": "Contra - Freelance 0% Commission",
@@ -85,7 +75,7 @@
     "url": "https://contra.com/opportunity-feed",
     "target_type": "playwright",
     "frequency_minutes": 30,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["flutter", "mobile", "web development", "fullstack", "python"],
     "selectors": {
       "item": "[data-testid='opportunity-card']",
@@ -100,7 +90,7 @@
     "url": "https://golance.com/jobs?q=python",
     "target_type": "playwright",
     "frequency_minutes": 30,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["python", "web", "mobile", "api", "automation"],
     "selectors": {
       "item": ".job-item",
@@ -125,7 +115,7 @@
     "url": "https://www.guru.com/d/jobs/c/programming-development/",
     "target_type": "playwright",
     "frequency_minutes": 45,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["ocr", "python", "flutter", "web development"],
     "selectors": {
       "item": ".jobRecord",
@@ -139,7 +129,7 @@
     "category": "Remote Tech Jobs",
     "url": "https://remotive.com/remote-jobs/feed",
     "target_type": "rss",
-    "frequency_minutes": 30,
+    "frequency_minutes": 360,
     "is_active": true,
     "keywords": ["python", "flutter", "react", "fullstack", "ocr", "scraping"],
     "selectors": {}
@@ -150,7 +140,7 @@
     "url": "https://www.devjobsscanner.com/web-scraping-jobs/",
     "target_type": "playwright",
     "frequency_minutes": 60,
-    "is_active": true,
+    "is_active": false,
     "keywords": ["scraping", "python", "automation", "crawling"],
     "selectors": {
       "item": ".job-card",
