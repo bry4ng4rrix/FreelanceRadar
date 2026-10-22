@@ -91,19 +91,21 @@ jobs:
     if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     environment: production
+    # Configuration GitHub : Settings → Secrets and variables → Actions. Hôte, utilisateur et
+    # chemin sont lus dans l'onglet Variables, ou à défaut dans l'onglet Secrets.
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST || secrets.VPS_HOST }}
+      VPS_USER: ${{ vars.VPS_USER || secrets.VPS_USER }}
+      VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH || secrets.VPS_DEPLOY_PATH }}
     steps:
       - uses: actions/checkout@v7
       - name: Clé SSH de déploiement
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
-          VPS_HOST: ${{ vars.VPS_HOST }}
-          VPS_USER: ${{ vars.VPS_USER }}
-          VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
         run: |
-          # Configuration GitHub : Settings → Secrets and variables → Actions.
           for name in VPS_HOST VPS_USER VPS_DEPLOY_PATH; do
-            [ -n "${!name}" ] || { echo "::error::Variable $name absente (onglet Variables, pas Secrets)."; exit 1; }
+            [ -n "${!name}" ] || { echo "::error::$name absent : ni dans Variables ni dans Secrets (Actions)."; exit 1; }
           done
           for name in SSH_KEY KNOWN_HOSTS; do
             [ -n "${!name}" ] || { echo "::error::Secret VPS_$name absent (onglet Secrets)."; exit 1; }
@@ -113,16 +115,16 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
       - name: Copier la configuration
         env:
-          TARGET: ${{ vars.VPS_USER }}@${{ vars.VPS_HOST }}
-          DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
+          TARGET: ${{ env.VPS_USER }}@${{ env.VPS_HOST }}
+          DEPLOY_PATH: ${{ env.VPS_DEPLOY_PATH }}
         run: |
           ssh -i ~/.ssh/deploy_key "$TARGET" "mkdir -p '$DEPLOY_PATH/n8n/workflows'"
           scp -i ~/.ssh/deploy_key docker-compose.prod.yml "$TARGET:$DEPLOY_PATH/docker-compose.prod.yml"
           scp -i ~/.ssh/deploy_key n8n/workflows/*.json "$TARGET:$DEPLOY_PATH/n8n/workflows/"
       - name: Déployer
         env:
-          TARGET: ${{ vars.VPS_USER }}@${{ vars.VPS_HOST }}
-          DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
+          TARGET: ${{ env.VPS_USER }}@${{ env.VPS_HOST }}
+          DEPLOY_PATH: ${{ env.VPS_DEPLOY_PATH }}
           BACKEND_IMAGE: ${{ needs.build.outputs.image }}
         run: |
           ssh -i ~/.ssh/deploy_key "$TARGET" bash -s -- "$DEPLOY_PATH" "$BACKEND_IMAGE" <<'EOF'
