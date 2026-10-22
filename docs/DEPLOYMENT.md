@@ -9,8 +9,8 @@ Le backend (API, worker, Beat, n8n, PostgreSQL, Redis) tourne sur le VPS avec
 |---|---|
 | Dossier | `~/freelanceradar` (`docker-compose.prod.yml`, `.env`, `n8n/workflows/`) |
 | Image | `ghcr.io/bry4ng4rrix/freelanceradar-backend:sha-<commit>` (construite par GitHub Actions) |
-| API | `127.0.0.1:8000` (publique uniquement via nginx en HTTPS, à configurer) |
-| n8n | `127.0.0.1:5678` (accès par tunnel SSH) |
+| API | `http://157.173.103.147:8000` (`API_BIND=0.0.0.0` dans `.env`) |
+| n8n | `http://157.173.103.147:5678` (`N8N_BIND=0.0.0.0`, `N8N_SECURE_COOKIE=false`) ; identifiants du propriétaire dans `~/freelanceradar/n8n-owner.txt` (droits `600`) |
 | PostgreSQL, Redis | aucun port publié (réseau Docker interne) |
 
 Les secrets de l'application sont dans `~/freelanceradar/.env` (droits `600`), jamais dans Git ni
@@ -49,8 +49,11 @@ $C exec api python -m app.cli check-imap             # IMAP, lecture seule
 $C up -d                                             # redémarrer avec l'image mémorisée (.env)
 ```
 
-Accès à n8n depuis votre poste : `ssh -L 5678:127.0.0.1:5678 garrix@157.173.103.147`, puis
-http://localhost:5678 (créer le compte propriétaire au premier accès).
+n8n : http://157.173.103.147:5678 (compte propriétaire créé au déploiement, avant l'ouverture du
+port ; identifiants dans `~/freelanceradar/n8n-owner.txt`, à changer après la première connexion).
+
+**Exposition directe en HTTP** : mots de passe et jetons circulent en clair. Passer en HTTPS (section
+suivante) puis remettre `API_BIND` / `N8N_BIND` à `127.0.0.1` et `N8N_SECURE_COOKIE=true`.
 
 ## Sauvegarde et restauration PostgreSQL
 
@@ -66,6 +69,6 @@ sens par les tests, sur une base dédiée.
 
 ## HTTPS (à faire)
 
-L'API n'est pas encore exposée publiquement. Il faut un nom de domaine pointant vers
+L'API est exposée en HTTP sur le port 8000. Pour HTTPS, il faut un nom de domaine pointant vers
 `157.173.103.147`, puis un site nginx (`proxy_pass http://127.0.0.1:8000`) et un certificat
 `certbot --nginx`, comme pour les autres sites du serveur (nécessite `sudo`).

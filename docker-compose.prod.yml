@@ -3,7 +3,8 @@
 #   docker compose -f docker-compose.prod.yml up -d
 #
 # - PostgreSQL et Redis ne publient AUCUN port : accessibles seulement sur le réseau interne.
-# - API et n8n écoutent sur 127.0.0.1 : exposition publique via nginx (HTTPS) uniquement.
+# - API et n8n : 127.0.0.1 par défaut ; API_BIND / N8N_BIND=0.0.0.0 pour les exposer
+#   directement (HTTP en clair : préférer HTTPS via nginx dès qu'un domaine est disponible).
 # - Les secrets sont dans .env (sur le serveur, jamais dans Git).
 name: freelanceradar
 
@@ -69,10 +70,10 @@ services:
       - app.main:app
       - --host=0.0.0.0
       - --port=8000
-      - --proxy-headers
-      - --forwarded-allow-ips=*
+    # Pas de --forwarded-allow-ips=* : exposée directement, l'API ne doit pas croire un en-tête
+    # X-Forwarded-For fourni par le client (contournement de la limite de connexion par IP).
     ports:
-      - "127.0.0.1:${API_PORT:-8000}:8000"
+      - "${API_BIND:-127.0.0.1}:${API_PORT:-8000}:8000"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -132,6 +133,8 @@ services:
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_HOST: ${N8N_HOST:-localhost}
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      # false seulement pour un accès HTTP sans HTTPS (cookie de session non « Secure »).
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-true}
       WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
       FREELANCERADAR_API_URL: http://api:8000
       FREELANCERADAR_SERVICE_TOKEN: ${SERVICE_API_TOKEN:?SERVICE_API_TOKEN manquant dans .env}
@@ -146,7 +149,7 @@ services:
     restart: unless-stopped
     environment: *n8n-env
     ports:
-      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+      - "${N8N_BIND:-127.0.0.1}:${N8N_PORT:-5678}:5678"
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:
