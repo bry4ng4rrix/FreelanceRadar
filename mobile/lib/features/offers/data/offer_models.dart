@@ -31,12 +31,13 @@ enum OfferStatus {
       values.firstWhere((status) => status.api == value, orElse: () => newOffer);
 }
 
-/// Tris proposés par l'API (`sort`).
+/// Tris proposés par l'API (`sort`), dans l'ordre du menu. Par défaut : publication la plus
+/// récente (les offres sans date de publication passent à la fin, côté serveur).
 enum OfferSort {
-  collectedDesc('-collected_at', 'Collecte la plus récente'),
-  collectedAsc('collected_at', 'Collecte la plus ancienne'),
   publishedDesc('-published_at', 'Publication la plus récente'),
-  publishedAsc('published_at', 'Publication la plus ancienne');
+  publishedAsc('published_at', 'Publication la plus ancienne'),
+  collectedDesc('-collected_at', 'Collecte la plus récente'),
+  collectedAsc('collected_at', 'Collecte la plus ancienne');
 
   const OfferSort(this.api, this.label);
 
@@ -138,7 +139,7 @@ class OfferFilters {
     this.status,
     this.publishedAfter,
     this.includeArchived = false,
-    this.sort = OfferSort.collectedDesc,
+    this.sort = OfferSort.publishedDesc,
   });
 
   final String? search;

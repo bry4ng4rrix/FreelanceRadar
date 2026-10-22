@@ -26,6 +26,9 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - n8n : collecte quotidienne automatique (workflow importé et activé au démarrage).
 - Production : `docker-compose.prod.yml`, workflow GitHub Actions (tests, image GHCR, déploiement SSH), guide `docs/DEPLOYMENT.md`.
 
+### Modifié
+- Mobile : la liste des offres est triée par défaut par date de publication, de la plus récente à la plus ancienne (au lieu de la date de collecte).
+
 ### Supprimé
 - Mobile : écrans sans équivalent backend (candidatures, documents, notifications, profil, administration, temps réel), conservés dans le commit `f55f266`.
 

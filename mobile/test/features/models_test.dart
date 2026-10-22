@@ -280,7 +280,7 @@ void main() {
       const filters = OfferFilters(search: 'a');
       expect(filters.hasSearch, isFalse);
       expect(filters.toQuery().containsKey('q'), isFalse);
-      expect(filters.toQuery()['sort'], '-collected_at');
+      expect(filters.toQuery()['sort'], '-published_at'); // tri par défaut
     });
 
     test('égalité (clé de rechargement de la liste)', () {
